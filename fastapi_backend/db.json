@@ -1,0 +1,17 @@
+{
+    "users": {
+        "407317e5-3dca-4eb4-8823-f5ef6bcfd14a": {
+            "id": "407317e5-3dca-4eb4-8823-f5ef6bcfd14a",
+            "username": "testuser"
+        }
+    },
+    "passkeys": [
+        {
+            "id": "d6lb6o8vYVcdGtWn48Dp763OI48=",
+            "user_id": "407317e5-3dca-4eb4-8823-f5ef6bcfd14a",
+            "public_key": "a50102032620012158204f039db43195ddf439780a5afbfe6f6a80055b9f5ed708c668edfc1b4449ed2b225820b31471c447fab00535e278af4dd7293f207f7cc6af596c7b455d48440b9e2495",
+            "sign_count": 0
+        }
+    ],
+    "challenges": {}
+}
