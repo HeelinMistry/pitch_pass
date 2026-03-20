@@ -1,15 +1,21 @@
 {
     "users": {
-        "407317e5-3dca-4eb4-8823-f5ef6bcfd14a": {
-            "id": "407317e5-3dca-4eb4-8823-f5ef6bcfd14a",
+        "eb45c8a0-a712-4b88-9db9-f943b8ca4d20": {
+            "id": "eb45c8a0-a712-4b88-9db9-f943b8ca4d20",
             "username": "testuser"
         }
     },
     "passkeys": [
         {
-            "id": "d6lb6o8vYVcdGtWn48Dp763OI48=",
-            "user_id": "407317e5-3dca-4eb4-8823-f5ef6bcfd14a",
-            "public_key": "a50102032620012158204f039db43195ddf439780a5afbfe6f6a80055b9f5ed708c668edfc1b4449ed2b225820b31471c447fab00535e278af4dd7293f207f7cc6af596c7b455d48440b9e2495",
+            "id": "RbknqRDuEw3y4qAFYJsfrBzAyiI=",
+            "user_id": "eb45c8a0-a712-4b88-9db9-f943b8ca4d20",
+            "public_key": "a5010203262001215820d90833806cbc98b487ac339798dc9a5b0a405e6f154d21af585a5e5f75029c112258201d0f0ef1197413a85ec3f57f90653cadf72b015a62aa74c72fd12926b7fe8b78",
+            "sign_count": 0
+        },
+        {
+            "id": "Z3t/qobIUGSkABSOvF18bbkkkcM=",
+            "user_id": "eb45c8a0-a712-4b88-9db9-f943b8ca4d20",
+            "public_key": "a5010203262001215820ae9d6b538daad6766a1ef39fa4efebd59f02bced0b7111c44eb25903bf17cd67225820f18b0532201eda65fc5f776d3c41ee1e56397efda87eb3d7b57c8c34a5345085",
             "sign_count": 0
         }
     ],
