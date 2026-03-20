@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Login | PitchPass Kinetic</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ff7351", "surface-container-highest": "#262626", "outline": "#767575",
+                        "on-surface": "#ffffff", "primary-container": "#cafd00", "background": "#0e0e0e",
+                        "on-primary-fixed-variant": "#526900", "outline-variant": "#484847", "surface-container": "#1a1a1a"
+                    },
+                    fontFamily: { "headline": ["Space Grotesk"], "body": ["Manrope"], "label": ["Manrope"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .pitch-grid {
+            background-image: linear-gradient(to right, #767575 1px, transparent 1px), linear-gradient(to bottom, #767575 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.05;
+        }
+        .kinetic-gradient { background: linear-gradient(135deg, #f3ffca 0%, #cafd00 100%); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-[black] min-h-screen flex flex-col">
+
+<header class="fixed top-0 w-full z-50 no-border bg-gradient-to-b from-[#0e0e0e] to-transparent flex justify-between items-center px-6 h-20 w-full">
+    <div class="text-2xl font-black italic text-[#cafd00] tracking-tighter uppercase font-headline">PitchPass</div>
+</header>
+
+<main class="relative flex-grow flex items-center justify-center px-6 py-24 overflow-hidden">
+    <div class="absolute inset-0 z-0">
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-transparent"></div>
+        <div class="absolute inset-0 pitch-grid"></div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-md">
+        <div class="mb-10 -ml-4 md:-ml-8">
+            <h1 class="font-headline text-5xl md:text-7xl font-black italic tracking-tighter text-on-surface leading-none uppercase">
+                Ready to<br/><span class="text-primary-container">Play?</span>
+            </h1>
+            <p class="font-label text-xs uppercase tracking-[0.3em] text-outline mt-4 ml-6 md:ml-10">Welcome Back, Captain</p>
+        </div>
+
+        <div class="bg-surface-container/80 backdrop-blur-3xl rounded-xl p-8 border border-outline-variant/20 shadow-2xl">
+            <div class="space-y-4">
+
+                <div>
+                    <input type="text" id="username" placeholder="Enter Username"
+                           class="w-full bg-[#262626] border border-[#484847] rounded-xl px-4 py-4 text-white focus:border-[#cafd00] focus:ring-1 focus:ring-[#cafd00] outline-none transition-all placeholder:text-[#767575] font-body"
+                           value="testuser">
+                </div>
+
+                <button id="loginBtn" class="kinetic-gradient w-full group py-5 px-8 rounded-xl flex items-center justify-between transition-all active:scale-95 duration-150">
+                    <div class="flex flex-col items-start">
+                        <span class="font-label text-[10px] font-bold uppercase tracking-widest text-on-primary-fixed-variant opacity-70">Fast Secure Access</span>
+                        <span class="font-headline font-bold text-xl text-on-primary-fixed-variant uppercase tracking-tight">Login with Passkey</span>
+                    </div>
+                    <div class="bg-on-primary-fixed-variant/10 p-3 rounded-lg group-hover:bg-on-primary-fixed-variant/20 transition-colors">
+                        <span class="material-symbols-outlined text-on-primary-fixed-variant text-3xl" style="font-variation-settings: 'FILL' 1;">fingerprint</span>
+                    </div>
+                </button>
+            </div>
+
+            <div id="status-message" class="mt-4 text-center font-label text-xs uppercase tracking-widest text-outline h-4 transition-all"></div>
+
+            <p class="mt-8 text-center font-label text-[10px] text-outline uppercase tracking-widest">
+                New to the pitch? <a href="#" id="registerBtn" class="text-primary-container font-bold hover:underline transition-all">Draft Account</a>
+            </p>
+        </div>
+    </div>
+</main>
+
+<script>
+    const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
+    const API_URL = 'http://127.0.0.1:8000/api';
+
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const usernameInput = document.getElementById('username');
+    const statusMsg = document.getElementById('status-message');
+
+    const updateStatus = (msg, isError = false) => {
+        statusMsg.textContent = msg;
+        statusMsg.className = `mt-4 text-center font-label text-xs uppercase tracking-widest h-4 transition-all ${isError ? 'text-error font-bold' : 'text-primary-container font-bold'}`;
+    };
+
+    // --- REGISTRATION ---
+    registerBtn.onclick = async (e) => {
+        e.preventDefault(); // Prevent the <a> tag from jumping the page
+        const username = usernameInput.value;
+        if (!username) return updateStatus('Please enter a username', true);
+
+        updateStatus('Requesting biometric setup...');
+
+        try {
+            const resp = await fetch(`${API_URL}/auth/register/options/${username}`);
+            const options = await resp.json();
+            const attestationResponse = await startRegistration(options);
+
+            const verifyResp = await fetch(`${API_URL}/auth/register/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, response: attestationResponse }),
+            });
+
+            const result = await verifyResp.json();
+            if (result.status === 'success') {
+                updateStatus('✅ Registered! You can now login.');
+            } else {
+                updateStatus('❌ Registration Failed', true);
+            }
+        } catch (err) {
+            updateStatus('Error: ' + err.message, true);
+        }
+    };
+
+    // --- LOGIN ---
+    loginBtn.onclick = async () => {
+        const username = usernameInput.value;
+        if (!username) return updateStatus('Please enter a username', true);
+
+        updateStatus('Awaiting biometrics...');
+
+        try {
+            const resp = await fetch(`${API_URL}/auth/login/options/${username}`);
+            const options = await resp.json();
+            const assertionResponse = await startAuthentication(options);
+
+            const verifyResp = await fetch(`${API_URL}/auth/login/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, response: assertionResponse }),
+            });
+
+            const result = await verifyResp.json();
+
+            if (result.status === 'success') {
+                updateStatus('✅ Access Granted!');
+
+                // --- CRITICAL JWT STEP ---
+                // Save the JWT to local storage so the dashboard can use it
+                if(result.access_token) {
+                    localStorage.setItem('pitchpass_token', result.access_token);
+                    // Redirect to the dashboard after a short delay
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                }
+            } else {
+                updateStatus('❌ Login Failed', true);
+            }
+        } catch (err) {
+            updateStatus('Error: ' + err.message, true);
+        }
+    };
+</script>
+</body>
+</html>

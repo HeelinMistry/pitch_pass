@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>PitchPass - Create Match</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap"
+          rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+          rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+          rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-secondary-fixed-variant": "#5c5b5b",
+                "surface": "#0e0e0e",
+                "on-secondary": "#525251",
+                "on-tertiary": "#005d62",
+                "secondary-container": "#474747",
+                "tertiary-container": "#17eefa",
+                "on-error": "#450900",
+                "outline": "#767575",
+                "inverse-surface": "#fcf9f8",
+                "on-primary-container": "#4a5e00",
+                "secondary-fixed": "#e4e2e1",
+                "surface-variant": "#262626",
+                "on-tertiary-container": "#005458",
+                "surface-tint": "#f3ffca",
+                "on-surface": "#ffffff",
+                "on-primary": "#516700",
+                "on-primary-fixed-variant": "#526900",
+                "surface-container-lowest": "#000000",
+                "secondary": "#e4e2e1",
+                "primary-fixed": "#cafd00",
+                "error-dim": "#d53d18",
+                "error": "#ff7351",
+                "on-tertiary-fixed-variant": "#005e63",
+                "on-secondary-container": "#d2d0cf",
+                "on-tertiary-fixed": "#003f43",
+                "primary-container": "#cafd00",
+                "on-error-container": "#ffd2c8",
+                "on-secondary-fixed": "#3f3f3f",
+                "tertiary-fixed-dim": "#00deea",
+                "on-background": "#ffffff",
+                "surface-container-highest": "#262626",
+                "error-container": "#b92902",
+                "primary-fixed-dim": "#beee00",
+                "tertiary-dim": "#00deea",
+                "tertiary-fixed": "#17eefa",
+                "inverse-primary": "#516700",
+                "outline-variant": "#484847",
+                "secondary-fixed-dim": "#d6d4d3",
+                "surface-container-low": "#131313",
+                "on-surface-variant": "#adaaaa",
+                "primary-dim": "#beee00",
+                "primary": "#f3ffca",
+                "on-primary-fixed": "#3a4a00",
+                "inverse-on-surface": "#565555",
+                "surface-bright": "#2c2c2c",
+                "surface-dim": "#0e0e0e",
+                "secondary-dim": "#d6d4d3",
+                "tertiary": "#88f6ff",
+                "surface-container": "#1a1a1a",
+                "background": "#0e0e0e",
+                "surface-container-high": "#20201f"
+              },
+              fontFamily: {
+                "headline": ["Space Grotesk"],
+                "body": ["Manrope"],
+                "label": ["Manrope"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pitch-grid {
+            background-image: radial-gradient(#767575 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            opacity: 0.05;
+        }
+        .step-gradient {
+            background: linear-gradient(135deg, #f3ffca 0%, #cafd00 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-neutral-950/80 backdrop-blur-xl border-b border-neutral-800/20 shadow-[0_0_30px_rgba(190,238,0,0.05)]">
+    <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+        <div class="text-2xl font-black italic text-[#f3ffca] tracking-tighter font-headline">PitchPass</div>
+        <div class="hidden md:flex items-center gap-8">
+            <a class="text-neutral-400 font-['Manrope'] font-medium text-sm hover:text-[#f3ffca] transition-colors duration-200"
+               href="#">Matches</a>
+            <a class="text-neutral-400 font-['Manrope'] font-medium text-sm hover:text-[#f3ffca] transition-colors duration-200"
+               href="#">Dashboard</a>
+            <a class="text-neutral-400 font-['Manrope'] font-medium text-sm hover:text-[#f3ffca] transition-colors duration-200"
+               href="#">Profile</a>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="material-symbols-outlined text-neutral-400 cursor-pointer hover:text-[#f3ffca] transition-colors">notifications</span>
+            <span class="material-symbols-outlined text-neutral-400 cursor-pointer hover:text-[#f3ffca] transition-colors">account_circle</span>
+        </div>
+    </div>
+</header>
+<!-- Main Canvas -->
+<main class="min-h-screen pt-24 pb-12 px-6 relative overflow-hidden">
+    <!-- Pitch Grid Texture -->
+    <div class="absolute inset-0 pitch-grid pointer-events-none"></div>
+    <div class="max-w-4xl mx-auto relative z-10">
+        <!-- Header Section -->
+        <div class="mb-12">
+            <h1 class="font-headline text-5xl md:text-7xl font-bold tracking-tight mb-4 uppercase">
+                Launch <span class="text-primary-container">Match</span>
+            </h1>
+            <p class="text-on-surface-variant font-body max-w-lg">
+                Define the stakes, lock the pitch, and recruit your squad. Professional-grade match organization starts
+                here.
+            </p>
+        </div>
+        <!-- Multi-Step Form Container -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Left: Progress Indicators -->
+            <div class="lg:col-span-3 flex lg:flex-col gap-4">
+                <div class="flex-1 lg:flex-none p-4 rounded-xl bg-surface-container-high border-l-4 border-primary-container">
+                    <span class="text-[10px] uppercase tracking-widest font-bold text-primary-container">Step 01</span>
+                    <div class="text-sm font-headline font-bold text-on-surface">Core Intel</div>
+                </div>
+                <div class="flex-1 lg:flex-none p-4 rounded-xl bg-surface-container-low opacity-50">
+                    <span class="text-[10px] uppercase tracking-widest font-bold text-outline">Step 02</span>
+                    <div class="text-sm font-headline font-bold text-on-surface-variant">Economics</div>
+                </div>
+                <div class="flex-1 lg:flex-none p-4 rounded-xl bg-surface-container-low opacity-50">
+                    <span class="text-[10px] uppercase tracking-widest font-bold text-outline">Step 03</span>
+                    <div class="text-sm font-headline font-bold text-on-surface-variant">Confirm</div>
+                </div>
+            </div>
+            <!-- Right: Form Sections -->
+            <div class="lg:col-span-9 space-y-12">
+                <!-- Section 1: Basic Info -->
+                <section class="bg-surface-container-low p-8 rounded-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4">
+                        <span class="material-symbols-outlined text-primary/10 text-8xl select-none"
+                              style="font-variation-settings: 'FILL' 1;">sports_soccer</span>
+                    </div>
+                    <div class="relative z-10">
+                        <h2 class="font-headline text-2xl font-bold mb-8 flex items-center gap-3">
+                            <span class="w-2 h-8 bg-primary-container"></span>
+                            BASIC INFO
+                        </h2>
+                        <div class="space-y-6">
+                            <div class="group">
+                                <label class="block text-[10px] uppercase tracking-[0.2em] font-bold text-outline mb-2">Match
+                                    Identity</label>
+                                <input class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 font-headline text-xl text-on-surface placeholder:text-outline/50 transition-all"
+                                       placeholder="e.g. Wednesday Night Elite" type="text"/>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] uppercase tracking-[0.2em] font-bold text-outline mb-2">Kick-Off
+                                        Date</label>
+                                    <div class="relative">
+                                        <input class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 text-on-surface appearance-none"
+                                               type="date"/>
+                                        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline pointer-events-none">calendar_today</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase tracking-[0.2em] font-bold text-outline mb-2">Time</label>
+                                    <div class="relative">
+                                        <input class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 text-on-surface appearance-none"
+                                               type="time"/>
+                                        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline pointer-events-none">schedule</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-[0.2em] font-bold text-outline mb-2">The
+                                    Pitch / Location</label>
+                                <div class="relative">
+                                    <input class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 text-on-surface placeholder:text-outline/50"
+                                           placeholder="Search sports complexes or enter address" type="text"/>
+                                    <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline">location_on</span>
+                                </div>
+                                <!-- Mini Map Preview -->
+                                <div class="mt-4 h-32 rounded-xl overflow-hidden bg-surface-container-highest relative group">
+                                    <img alt="Map Preview"
+                                         class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                                         data-alt="Stylized dark mode satellite map of a soccer field"
+                                         data-location="London"
+                                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJzH-dX3-BvUY7ZLmfS7S2m0thKVOe8zkTgoKenthavEEebMTrIsbyeRiGa2s2IGnxeKA9XyoHnelgTJgxrUI1f9c3twRLQ6wI93j67kSqkADf8DRH66Z8sYt37PQ4t6lQrQADCIK8D2taTw8N5nNLDRcQX6oBijBuQAF3E6qn1raq0bSCTvKKQpGiXCig8JH4akAFcIEeQeygURx0Xk33q0VzkqC2DPNwl8iYoDnbMGz-BJmW8CjonnoQmXperSOuBNgfkXDXxUrf"/>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="bg-primary-container text-on-primary-fixed-variant px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                                            Verify Location
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Section 2: Game Settings -->
+                <section
+                        class="bg-surface-container-low p-8 rounded-2xl relative overflow-hidden border border-white/5">
+                    <h2 class="font-headline text-2xl font-bold mb-8 flex items-center gap-3">
+                        <span class="w-2 h-8 bg-tertiary-fixed"></span>
+                        GAME SETTINGS
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-[0.2em] font-bold text-outline mb-2">Player
+                                    Roster Size</label>
+                                <div class="flex items-center gap-4">
+                                    <button class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-container-highest transition-colors">
+                                        <span class="material-symbols-outlined">remove</span>
+                                    </button>
+                                    <div class="flex-1 text-center font-headline text-3xl font-bold">14</div>
+                                    <button class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-container-highest transition-colors">
+                                        <span class="material-symbols-outlined">add</span>
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-outline mt-2 uppercase text-center italic">7 vs 7 format
+                                    recommended</p>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-surface-container-high rounded-xl">
+                                <div>
+                                    <div class="text-sm font-bold">Waitlist Management</div>
+                                    <div class="text-[10px] text-outline uppercase tracking-wider">Auto-fill slots on
+                                        dropouts
+                                    </div>
+                                </div>
+                                <div class="w-12 h-6 bg-primary-container rounded-full relative cursor-pointer">
+                                    <div class="absolute right-1 top-1 w-4 h-4 bg-on-primary-container rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-[0.2em] font-bold text-outline mb-2">Cost
+                                    Per Player</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-headline font-bold text-primary-container">$</span>
+                                    <input class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 pl-8 text-on-surface text-xl font-headline font-bold"
+                                           placeholder="0.00" type="number"/>
+                                </div>
+                                <p class="text-[10px] text-outline mt-2 uppercase">Payments handled via PitchPass
+                                    Kinetic</p>
+                            </div>
+                            <div class="p-4 bg-tertiary-fixed/10 border border-tertiary-fixed/20 rounded-xl flex items-center gap-4">
+                                <span class="material-symbols-outlined text-tertiary-fixed">info</span>
+                                <div class="text-[11px] leading-tight text-tertiary-fixed/80 font-medium">
+                                    Players will see a breakdown of field rental + service fees.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Section 3: Final Call (Confirmation & Link) -->
+                <section
+                        class="bg-surface-container-low p-10 rounded-2xl border-2 border-primary-container shadow-[0_0_50px_rgba(190,238,0,0.1)]">
+                    <div class="text-center space-y-8">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-container/20 mb-4">
+                            <span class="material-symbols-outlined text-primary-container text-4xl"
+                                  style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        </div>
+                        <h2 class="font-headline text-3xl font-bold uppercase tracking-tight">Draft Ready</h2>
+                        <p class="text-on-surface-variant max-w-sm mx-auto text-sm">Review your match details above.
+                            Once generated, your link is active and ready for the squad.</p>
+                        <div class="flex flex-col gap-4 max-w-sm mx-auto">
+                            <button class="w-full py-4 px-8 rounded-xl font-headline font-bold text-on-primary-fixed-variant step-gradient flex items-center justify-center gap-3 group active:scale-[0.98] transition-all">
+                                GENERATE SHARE LINK
+                                <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
+                            </button>
+                            <!-- Result (Simulated State) -->
+                            <div class="mt-6 space-y-4">
+                                <div class="bg-surface-container-high p-4 rounded-xl border border-outline-variant/30 flex items-center justify-between gap-4">
+                                    <code class="text-primary-container font-mono text-sm truncate">pitchpass.io/m/wed-elite-762</code>
+                                    <button class="bg-surface-container-highest hover:bg-on-secondary px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-on-surface flex items-center gap-2 transition-colors">
+                                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 border-t border-neutral-900 bg-black mt-20">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-6 max-w-7xl mx-auto">
+        <div class="text-neutral-100 font-bold font-headline text-lg">PitchPass Kinetic</div>
+        <div class="flex gap-8">
+            <a class="font-['Manrope'] text-xs uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
+               href="#">Support</a>
+            <a class="font-['Manrope'] text-xs uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
+               href="#">Privacy</a>
+            <a class="font-['Manrope'] text-xs uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
+               href="#">Terms</a>
+            <a class="font-['Manrope'] text-xs uppercase tracking-widest text-neutral-500 hover:text-white transition-colors"
+               href="#">Match Rules</a>
+        </div>
+        <div class="font-['Manrope'] text-xs uppercase tracking-widest text-neutral-500">
+            © 2024 PitchPass Kinetic. All Rights Reserved.
+        </div>
+    </div>
+</footer>
+<!-- Floating Action Logic (Suppressed on this transactional screen as per protocol) -->
+</body>
+</html>
