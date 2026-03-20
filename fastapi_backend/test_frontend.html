@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebAuthn Test - Pitch Pass</title>
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 50px; background: #f4f7f6; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; margin-bottom: 10px; }
+        #reg-btn { background-color: #4CAF50; }
+        #login-btn { background-color: #2196F3; }
+        #status { margin-top: 20px; font-size: 0.9rem; color: #555; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>WebAuthn Test</h2>
+    <input type="text" id="username" placeholder="Enter Username" value="testuser">
+    <button id="reg-btn">Register Passkey</button>
+    <button id="login-btn">Login with Passkey</button>
+    <div id="status">Ready.</div>
+</div>
+
+<script>
+    const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
+    const API_URL = 'http://127.0.0.1:8000/api';
+
+    const updateStatus = (msg) => document.getElementById('status').innerText = msg;
+
+    // --- REGISTRATION ---
+    document.getElementById('reg-btn').onclick = async () => {
+        const username = document.getElementById('username').value;
+        updateStatus('Fetching registration options...');
+
+        // 1. Get options from FastAPI
+        const resp = await fetch(`${API_URL}/auth/register/options/${username}`);
+        const options = await resp.json();
+
+        try {
+            // 2. Trigger Browser Biometric Prompt
+            const attestationResponse = await startRegistration(options);
+
+            // 3. Send response back to FastAPI
+            const verifyResp = await fetch(`${API_URL}/auth/register/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, response: attestationResponse }),
+            });
+
+            const result = await verifyResp.json();
+            updateStatus(result.status === 'success' ? '✅ Registered!' : '❌ Failed');
+        } catch (err) {
+            updateStatus('Error: ' + err.message);
+        }
+    };
+
+    // --- LOGIN ---
+    document.getElementById('login-btn').onclick = async () => {
+        const username = document.getElementById('username').value;
+        updateStatus('Fetching login options...');
+
+        const resp = await fetch(`${API_URL}/auth/login/options/${username}`);
+        const options = await resp.json();
+
+        try {
+            const assertionResponse = await startAuthentication(options);
+
+            const verifyResp = await fetch(`${API_URL}/auth/login/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, response: assertionResponse }),
+            });
+
+            const result = await verifyResp.json();
+            updateStatus(result.status === 'success' ? '✅ Logged In!' : '❌ Failed');
+        } catch (err) {
+            updateStatus('Error: ' + err.message);
+        }
+    };
+</script>
+</body>
+</html>

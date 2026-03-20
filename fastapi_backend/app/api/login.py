@@ -6,7 +6,6 @@ import json
 from app.db.mock_db import get_db, save_db, get_user_by_username
 from webauthn.helpers import parse_authentication_credential_json
 from webauthn.helpers.structs import PublicKeyCredentialDescriptor
-from app.core.auth_utils import create_access_token
 
 from webauthn import (
     generate_authentication_options,
@@ -109,16 +108,10 @@ async def verify_login(payload: VerifyAuthReq):
     target_passkey["sign_count"] = verification.new_sign_count
     save_db(db)
 
-    # 6. Generate the real JWT!
-    # We store the user_id as the "subject" (sub) and throw in the username for convenience
-    token_data = {"sub": target_passkey["user_id"], "username": username}
-    access_token = create_access_token(data=token_data)
-
     return {
         "status": "success",
         "user_id": target_passkey["user_id"],
-        "access_token": access_token,  # <-- RETURN REAL TOKEN
-        "token_type": "bearer"  # <-- STANDARD OAUTH2 FORMAT
+        "token": "dummy-jwt-token"
     }
 
 def base64url_to_standard_base64(s: str) -> str:
