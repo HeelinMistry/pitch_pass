@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Match Details | PitchPass</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { "primary": "#f3ffca", "primary-container": "#cafd00", "surface": "#0e0e0e", "on-surface": "#ffffff", "outline": "#767575", "error": "#ff7351" }}}
+        }
+    </script>
+    <style>body { opacity: 0; transition: opacity 0.5s ease; }</style>
+</head>
+<body class="bg-surface text-on-surface font-body">
+
+<main class="max-w-4xl mx-auto p-6 md:pt-20">
+    <button onclick="window.location.href='dashboard.html'" class="flex items-center gap-2 text-outline hover:text-primary-container mb-8 transition-colors">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span class="font-bold uppercase tracking-widest text-xs">Back to Dashboard</span>
+    </button>
+
+    <div id="match-content" class="space-y-10">
+        <div class="animate-pulse space-y-4">
+            <div class="h-12 bg-white/5 w-3/4 rounded-lg"></div>
+            <div class="h-6 bg-white/5 w-1/2 rounded-lg"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('id');
+    const token = localStorage.getItem('pitchpass_token');
+
+    window.onload = () => {
+        document.body.style.opacity = "1";
+        if (!matchId) window.location.href = 'dashboard.html';
+        fetchMatchDetails();
+    };
+
+    async function fetchMatchDetails() {
+        const container = document.getElementById('match-content');
+        if (!token) {
+            // Grab the full current URL (e.g., http://localhost:3000/match_details.html?id=m_123)
+            const currentUrl = encodeURIComponent(window.location.href);
+            window.location.href = `login.html?redirect=${currentUrl}`;
+            return;
+        }
+        try {
+            console.log("Fetching details for Match ID:", matchId); // Debugging
+
+            const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (resp.status === 401) {
+                localStorage.removeItem('pitchpass_token');
+                const currentUrl = encodeURIComponent(window.location.href);
+                return window.location.href = `login.html?redirect=${currentUrl}`;
+            }
+
+            if (!resp.ok) {
+                const errorText = await resp.text();
+                throw new Error(`Server responded with ${resp.status}: ${errorText}`);
+            }
+
+            const match = await resp.json();
+            console.log("Data received:", match); // Debugging
+            renderDetails(match);
+
+        } catch (err) {
+            console.error("Fetch failed:", err);
+            container.innerHTML = `
+                <div class="p-8 bg-error/10 border border-error/20 rounded-2xl text-center">
+                    <span class="material-symbols-outlined text-error text-4xl mb-4">error</span>
+                    <h2 class="text-xl font-bold text-error uppercase">Failed to Load Match</h2>
+                    <p class="text-sm text-outline mt-2">${err.message}</p>
+                    <button onclick="location.reload()" class="mt-6 px-6 py-2 bg-white/10 rounded-lg text-xs font-bold uppercase">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    function renderDetails(match) {
+        const container = document.getElementById('match-content');
+
+        // 1. Main Participation Button (For EVERYONE, including Host)
+        let participationBtn = match.is_joined
+            ? `<button onclick="toggleJoin()" class="w-full py-4 border-2 border-outline text-outline font-bold rounded-xl hover:border-error hover:text-error transition-all uppercase tracking-widest">Leave Squad</button>`
+            : `<button onclick="toggleJoin()" class="w-full py-4 bg-primary-container text-black font-bold rounded-xl hover:bg-primary active:scale-95 transition-all uppercase tracking-widest">Join Squad — £${match.cost}</button>`;
+
+        // 2. Admin Button (ONLY for Host)
+        let adminBtn = match.is_host
+            ? `<button onclick="cancelMatch()" class="mt-4 w-full py-2 text-error font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">delete</span> Cancel Match</button>`
+            : ``;
+
+        container.innerHTML = `
+            <header>
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="text-primary-container font-headline font-bold uppercase tracking-[0.3em] text-sm">Indoor Soccer • ${match.duration}HR</div>
+                    <div class="text-outline text-xs border border-outline/30 px-2 py-0.5 rounded-full">Hosted by ${match.host_username}</div>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black font-headline uppercase leading-none mb-6">${match.title}</h1>
+                <div class="flex flex-wrap gap-6 text-outline font-bold uppercase text-xs">
+                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">calendar_month</span>${match.date}</div>
+                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">schedule</span>${match.time}</div>
+                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">location_on</span>${match.location}</div>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-2 space-y-8">
+                    <div class="bg-white/5 p-8 rounded-2xl border border-white/5">
+                        <h3 class="font-headline font-bold uppercase tracking-widest text-outline mb-6">Confirmed Squad (${match.current_roster}/${match.roster_size})</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            ${match.player_list.map(p => `
+                                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+                                    <div class="w-8 h-8 rounded-full bg-primary-container text-black flex items-center justify-center font-bold text-xs">${p[0].toUpperCase()}</div>
+                                    <span class="text-sm font-bold">${p}</span>
+                                </div>
+                            `).join('')}
+                            ${Array(match.roster_size - match.current_roster).fill(0).map(() => `
+                                <div class="border border-dashed border-white/10 rounded-lg p-3 text-outline/30 text-xs font-bold uppercase italic text-center">Open Slot</div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="p-6 rounded-2xl bg-primary-container/5 border border-primary-container/20">
+                        <div class="text-[10px] font-bold text-primary-container uppercase tracking-widest mb-1">Entry Fee</div>
+                        <div class="text-4xl font-headline font-black mb-4">£${match.cost}</div>
+                        ${participationBtn}
+                        ${adminBtn}
+                    </div>
+                    <p class="text-[10px] text-outline uppercase text-center leading-relaxed">Cancelations allowed up to 24h before kick-off. Reliability index will be affected by late drop-outs.</p>
+                </div>
+            </div>
+        `;
+    }
+
+    async function toggleJoin() {
+        const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}/toggle-join`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        fetchMatchDetails()
+    }
+
+    async function cancelMatch() {
+        if (!confirm("Are you sure you want to cancel this match? This cannot be undone.")) return;
+        const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resp.ok) window.location.href = 'dashboard.html';
+    }
+</script>
+</body>
+</html>

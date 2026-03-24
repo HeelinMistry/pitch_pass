@@ -111,7 +111,11 @@ async def verify_login(payload: VerifyAuthReq):
 
     # 6. Generate the real JWT!
     # We store the user_id as the "subject" (sub) and throw in the username for convenience
-    token_data = {"sub": target_passkey["user_id"], "username": username}
+    token_data = {
+        "sub": username,  # Standard practice: 'sub' is the human-readable name
+        "username": username,  # For convenience
+        "id": target_passkey["user_id"]  # Explicitly add the UUID as 'id'
+    }
     access_token = create_access_token(data=token_data)
 
     return {

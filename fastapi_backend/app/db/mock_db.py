@@ -6,7 +6,10 @@ DB_FILE = "db.json"
 
 def get_db():
     if not os.path.exists(DB_FILE):
-        initial = {"users": {}, "passkeys": [], "challenges": {}}
+        initial = {
+            "users": {}, "passkeys": [], "challenges": {},
+            "matches": {}, "match_players": []
+        }
         with open(DB_FILE, "w") as f:
             json.dump(initial, f, indent=4)
         return initial
@@ -14,8 +17,11 @@ def get_db():
     with open(DB_FILE, "r") as f:
         content = f.read().strip()
         if not content:
-            return {"users": {}, "passkeys": [], "challenges": {}}
-        return json.loads(content)
+            return {"users": {}, "passkeys": [], "challenges": {}, "matches": {}, "match_players": []}
+
+        data = json.loads(content)
+
+        return data
 
 
 def save_db(data):

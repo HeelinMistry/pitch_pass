@@ -1,23 +1,40 @@
 {
     "users": {
-        "eb45c8a0-a712-4b88-9db9-f943b8ca4d20": {
-            "id": "eb45c8a0-a712-4b88-9db9-f943b8ca4d20",
+        "be4f3d5a-b1b4-4ef4-9928-92c371870ed6": {
+            "id": "be4f3d5a-b1b4-4ef4-9928-92c371870ed6",
             "username": "testuser"
         }
     },
     "passkeys": [
         {
-            "id": "RbknqRDuEw3y4qAFYJsfrBzAyiI=",
-            "user_id": "eb45c8a0-a712-4b88-9db9-f943b8ca4d20",
-            "public_key": "a5010203262001215820d90833806cbc98b487ac339798dc9a5b0a405e6f154d21af585a5e5f75029c112258201d0f0ef1197413a85ec3f57f90653cadf72b015a62aa74c72fd12926b7fe8b78",
-            "sign_count": 0
-        },
-        {
-            "id": "Z3t/qobIUGSkABSOvF18bbkkkcM=",
-            "user_id": "eb45c8a0-a712-4b88-9db9-f943b8ca4d20",
-            "public_key": "a5010203262001215820ae9d6b538daad6766a1ef39fa4efebd59f02bced0b7111c44eb25903bf17cd67225820f18b0532201eda65fc5f776d3c41ee1e56397efda87eb3d7b57c8c34a5345085",
+            "id": "hUolmYszh2qu6BnNAhJuq4hw3rs=",
+            "user_id": "be4f3d5a-b1b4-4ef4-9928-92c371870ed6",
+            "public_key": "a5010203262001215820e2ae174209e18bd830e87c84780c4c6a9d0495553c9a88ba353c2a06ba3478f72258208c62922f5c930888cdb5d9cfa000ebc4569e14c429e87f1fad39806ea4ff93e5",
             "sign_count": 0
         }
     ],
-    "challenges": {}
+    "challenges": {},
+    "matches": {
+        "m_d0431130": {
+            "id": "m_d0431130",
+            "sport": "indoor_soccer",
+            "duration": 1.5,
+            "title": "MNF",
+            "date": "2026-03-26",
+            "time": "19:00",
+            "location": "Jala",
+            "roster_size": 14,
+            "cost": 45.0,
+            "host_id": "be4f3d5a-b1b4-4ef4-9928-92c371870ed6",
+            "status": "Ready"
+        }
+    },
+    "match_players": [
+        {
+            "match_id": "m_d0431130",
+            "user_id": "be4f3d5a-b1b4-4ef4-9928-92c371870ed6",
+            "role": "player",
+            "status": "confirmed"
+        }
+    ]
 }

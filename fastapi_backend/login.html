@@ -32,6 +32,9 @@
             background-size: 40px 40px; opacity: 0.05;
         }
         .kinetic-gradient { background: linear-gradient(135deg, #f3ffca 0%, #cafd00 100%); }
+
+        body { opacity: 0; transition: opacity 0.5s ease-in-out; }
+
     </style>
 </head>
 <body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-[black] min-h-screen flex flex-col">
@@ -84,8 +87,21 @@
 </main>
 
 <script>
+    window.onload = () => document.body.style.opacity = "1";
+
     const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
     const API_URL = 'http://127.0.0.1:8000/api';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let redirectTarget = urlParams.get('redirect');
+
+    // Safety check: If it's empty or points back to login, go to dashboard
+    if (!redirectTarget || redirectTarget.includes('login.html')) {
+        redirectTarget = 'dashboard.html';
+    } else {
+        redirectTarget = decodeURIComponent(redirectTarget);
+    }
+
 
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
@@ -156,7 +172,7 @@
                     localStorage.setItem('pitchpass_token', result.access_token);
                     // Redirect to the dashboard after a short delay
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = redirectTarget;
                     }, 1000);
                 }
             } else {
