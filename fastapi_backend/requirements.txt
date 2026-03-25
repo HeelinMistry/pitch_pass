@@ -29,3 +29,4 @@ urllib3==2.6.3
 uvicorn==0.41.0
 webauthn==2.7.1
 python-jose[cryptography]==3.5.0
+sqlalchemy==2.0.48

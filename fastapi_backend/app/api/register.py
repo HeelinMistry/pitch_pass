@@ -1,8 +1,9 @@
 import base64
-
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+import uuid
 import json
+from fastapi import APIRouter, HTTPException, Depends, Request
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from webauthn import (
     generate_registration_options,
@@ -12,10 +13,9 @@ from webauthn import (
 from webauthn.helpers import parse_registration_credential_json
 
 from app.core.config import RP_ID, RP_NAME, ORIGIN
-import uuid
-from app.db.mock_db import get_db, save_db, get_user_by_username
+from app.db.database import get_db
+from app.db import models, crud
 
-# The prefix here means all routes in this file start with /api/auth/register
 router = APIRouter(prefix="/auth/register", tags=["Registration"])
 
 
@@ -24,21 +24,22 @@ class VerifyRegistrationReq(BaseModel):
     response: dict
 
 
-@router.get("/options/{username}")  # Cleaned path: becomes /api/auth/register/options/{username}
-async def get_registration_options(username: str, current_user_id: str = None):
-    db = get_db()
-    user = get_user_by_username(username)
+@router.get("/options/{username}")
+async def get_registration_options(
+        request: Request,
+        username: str,
+        db: Session = Depends(get_db)
+):
+    # 1. Check if user exists in SQL
+    user = crud.get_user_by_username(db, username)
 
-    # PRIORITY 1: If user is already logged in, we are definitely LINKING a device
-    if current_user_id:
-        user_id = current_user_id
-    # PRIORITY 2: If username exists, we are LINKING via username lookup
-    elif user:
-        user_id = user["id"]
-    # PRIORITY 3: Brand new user
+    if user:
+        user_id = user.id
     else:
+        # Generate new UUID for brand new user
         user_id = str(uuid.uuid4())
 
+    # 2. Generate WebAuthn Options
     options = generate_registration_options(
         rp_id=RP_ID,
         rp_name=RP_NAME,
@@ -46,28 +47,34 @@ async def get_registration_options(username: str, current_user_id: str = None):
         user_name=username,
     )
 
-    # FIX: Convert bytes to a base64 string for JSON storage
-    db["challenges"][username] = {
+    # 3. Store challenge in the SESSION (RAM/Cookie) instead of db.json
+    # This automatically cleans up when the browser session ends
+    request.session["registration_challenge"] = {
         "challenge": base64.b64encode(options.challenge).decode('utf-8'),
-        "user_id": user_id
+        "user_id": user_id,
+        "username": username
     }
-    save_db(db)
 
     return json.loads(options_to_json(options))
 
 
-@router.post("/verify")  # Cleaned path: becomes /api/auth/register/verify
-async def verify_registration(payload: VerifyRegistrationReq):
-    db = get_db()
-    username = payload.username
+@router.post("/verify")
+async def verify_registration(
+        request: Request,
+        payload: VerifyRegistrationReq,
+        db: Session = Depends(get_db)
+):
+    # 1. Retrieve challenge from SessionMiddleware
+    challenge_data = request.session.get("registration_challenge")
 
-    if username not in db["challenges"]:
-        raise HTTPException(status_code=400, detail="Challenge not found")
+    if not challenge_data or challenge_data["username"] != payload.username:
+        print("❌ SESSION ERROR: No challenge found in request.session. Check CORS/Cookies.")
+        raise HTTPException(status_code=400, detail="Registration challenge not found or expired")
 
-    challenge_data = db["challenges"].pop(username)
     expected_challenge = base64.b64decode(challenge_data["challenge"])
 
     try:
+        # 2. Parse and Verify the Credential
         credential = parse_registration_credential_json(payload.response)
         verification = verify_registration_response(
             credential=credential,
@@ -77,23 +84,35 @@ async def verify_registration(payload: VerifyRegistrationReq):
             require_user_verification=True,
         )
     except Exception as e:
-        print(f"❌ VERIFICATION ERROR: {str(e)}")  # <--- ADD THIS LINE
-        save_db(db)  # Save the popped challenge
+        print(f"❌ WEBAMUTHN VERIFICATION ERROR: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
-    # 1. Ensure user exists in the "users" table
+    # 3. SQL PERSISTENCE: Ensure User exists
     user_id = challenge_data["user_id"]
-    if user_id not in db["users"]:
-        db["users"][user_id] = {"id": user_id, "username": username}
+    user = db.query(models.User).filter(models.User.id == user_id).first()
 
-    cred_id_str = base64.b64encode(verification.credential_id).decode('utf-8')
-    # 2. Append the new device to the "passkeys" list
-    db["passkeys"].append({
-        "id": cred_id_str,
-        "user_id": user_id,
-        "public_key": verification.credential_public_key.hex(),  # Store as hex for JSON
-        "sign_count": verification.sign_count
-    })
+    if not user:
+        user = models.User(id=user_id, username=payload.username)
+        db.add(user)
 
-    save_db(db)
+    # 4. SQL PERSISTENCE: Save the new Passkey
+    # We use the credential ID provided by the browser
+    new_passkey = models.Passkey(
+        id=credential.id,
+        user_id=user.id,
+        public_key=verification.credential_public_key.hex(),
+        sign_count=verification.sign_count
+    )
+
+    db.add(new_passkey)
+
+    try:
+        db.commit()  # Save both User and Passkey to pitchpass.db
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database save failed")
+    finally:
+        # Clear the challenge from session now that it's used
+        request.session.pop("reg_challenge", None)
+
     return {"status": "success", "user_id": user_id}

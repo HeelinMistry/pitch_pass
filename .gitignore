@@ -1,5 +1,6 @@
 .DS_Store
 fastapi_backend/.idea
+fastapi_backend/.env
 /fastapi_backend/app/__pycache__
 /fastapi_backend/app/api/__pycache__
 /fastapi_backend/app/core/__pycache__
