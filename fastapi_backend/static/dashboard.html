@@ -290,9 +290,16 @@
                 }
             }
 
+            // Dynamic styling based on cancelled state
+            const opacityClass = match.is_cancelled ? "opacity-50 grayscale" : "";
+            const badgeHtml = match.is_cancelled
+                ? `<span class="absolute top-4 right-4 bg-error text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest z-20">Cancelled</span>`
+                : "";
+
             // Notice how the button now points to match_details.html with the ID parameter!
             const card = `
-                <div class="group relative bg-surface-container-high rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-primary-container border border-transparent transition-colors">
+                <div class="group relative bg-surface-container-high rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-primary-container border border-transparent transition-all ${opacityClass}">
+                    ${badgeHtml}
                     <div class="w-full md:w-32 bg-surface-container-highest md:bg-primary-container flex md:flex-col items-center justify-center p-4 md:p-0 md:text-black text-white">
                         <span class="font-headline text-4xl font-black leading-none">${day}</span>
                         <span class="font-headline text-sm font-bold uppercase tracking-widest">${monthStr}</span>

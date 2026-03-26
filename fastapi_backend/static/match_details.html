@@ -15,7 +15,17 @@
     <style>body { opacity: 0; transition: opacity 0.5s ease; }</style>
 </head>
 <body class="bg-surface text-on-surface font-body">
-
+<div id="confirmModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-[#262626] w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl p-6 text-center">
+        <span id="confirmIcon" class="material-symbols-outlined text-4xl mb-4">warning</span>
+        <h3 id="confirmTitle" class="font-headline text-xl font-bold uppercase tracking-tight text-white mb-2">Confirm</h3>
+        <p id="confirmMessage" class="text-sm text-outline mb-6">Are you sure?</p>
+        <div class="flex gap-4">
+            <button onclick="closeConfirmModal()" class="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest bg-white/5 hover:bg-white/10 transition-colors">Abort</button>
+            <button id="confirmActionBtn" onclick="executeConfirm()" class="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-colors">Confirm</button>
+        </div>
+    </div>
+</div>
 <main class="max-w-4xl mx-auto p-6 md:pt-20">
     <button onclick="window.location.href='dashboard.html'" class="flex items-center gap-2 text-outline hover:text-primary-container mb-8 transition-colors">
         <span class="material-symbols-outlined">arrow_back</span>
@@ -87,27 +97,60 @@
         }
     }
 
+    let pendingAction = null;
+
     function renderDetails(match) {
         const container = document.getElementById('match-content');
 
-        // 1. Main Participation Button (For EVERYONE, including Host)
-        let participationBtn = match.is_joined
-            ? `<button onclick="toggleJoin()" class="w-full py-4 border-2 border-outline text-outline font-bold rounded-xl hover:border-error hover:text-error transition-all uppercase tracking-widest">Leave Squad</button>`
-            : `<button onclick="toggleJoin()" class="w-full py-4 bg-primary-container text-black font-bold rounded-xl hover:bg-primary active:scale-95 transition-all uppercase tracking-widest">Join Squad — £${match.cost}</button>`;
+        let participationBtn = "";
+        let adminBtn = "";
+        let statusBadge = "";
+        let opacityClass = "";
 
-        // 2. Admin Button (ONLY for Host)
-        let adminBtn = match.is_host
-            ? `<button onclick="cancelMatch()" class="mt-4 w-full py-2 text-error font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">delete</span> Cancel Match</button>`
-            : ``;
+        // Determine UI based on cancellation state
+        if (match.is_cancelled) {
+            statusBadge = `<div class="bg-error text-white font-bold px-3 py-1 rounded-full text-[10px] uppercase tracking-widest inline-block mb-4">Match Cancelled</div>`;
+            opacityClass = "opacity-60 grayscale"; // Dim the content slightly
+
+            if (match.is_host) {
+                adminBtn = `<button onclick="promptRestore()" class="w-full py-4 border-2 border-primary-container text-primary-container font-bold rounded-xl hover:bg-primary-container/10 transition-all uppercase tracking-widest mt-4">Restore Match</button>`;
+            } else {
+                participationBtn = `<button disabled class="w-full py-4 bg-[#262626] text-outline font-bold rounded-xl cursor-not-allowed uppercase tracking-widest">Unavailable</button>`;
+            }
+        } else {
+            // Active Match
+            if (match.is_joined) {
+                // User is confirmed -> Show LEAVE
+                participationBtn = `
+                    <button onclick="toggleJoin()"
+                        class="w-full py-4 border-2 border-outline text-outline font-bold rounded-xl hover:border-error hover:text-error transition-all uppercase tracking-widest flex items-center justify-center gap-2 group">
+                        <span class="material-symbols-outlined text-sm transition-transform group-hover:-translate-x-1">logout</span>
+                        Leave Squad
+                    </button>`;
+            } else {
+                // User is NOT in or has 'left' -> Show JOIN
+                participationBtn = `
+                    <button onclick="toggleJoin()"
+                        class="w-full py-4 bg-primary-container text-black font-bold rounded-xl hover:bg-[#b5e500] active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2 group">
+                        <span class="material-symbols-outlined text-sm transition-transform group-hover:scale-125">sports_soccer</span>
+                        Join Squad
+                    </button>`;
+            }
+
+            if (match.is_host) {
+                adminBtn = `<button onclick="promptCancel()" class="mt-4 w-full py-2 text-error font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">delete</span> Cancel Match</button>`;
+            }
+        }
 
         container.innerHTML = `
             <header>
+                ${statusBadge}
                 <div class="flex items-center gap-2 mb-2">
                     <div class="text-primary-container font-headline font-bold uppercase tracking-[0.3em] text-sm">Indoor Soccer • ${match.duration}HR</div>
                     <div class="text-outline text-xs border border-outline/30 px-2 py-0.5 rounded-full">Hosted by ${match.host_username}</div>
                 </div>
-                <h1 class="text-5xl md:text-7xl font-black font-headline uppercase leading-none mb-6">${match.title}</h1>
-                <div class="flex flex-wrap gap-6 text-outline font-bold uppercase text-xs">
+                <h1 class="text-5xl md:text-7xl font-black font-headline uppercase leading-none mb-6 ${opacityClass}">${match.title}</h1>
+                <div class="flex flex-wrap gap-6 text-outline font-bold uppercase text-xs ${opacityClass}">
                     <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">calendar_month</span>${match.date}</div>
                     <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">schedule</span>${match.time}</div>
                     <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">location_on</span>${match.location}</div>
@@ -115,17 +158,19 @@
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="md:col-span-2 space-y-8">
+                <div class="md:col-span-2 space-y-8 ${opacityClass}">
                     <div class="bg-white/5 p-8 rounded-2xl border border-white/5">
                         <h3 class="font-headline font-bold uppercase tracking-widest text-outline mb-6">Confirmed Squad (${match.current_roster}/${match.roster_size})</h3>
                         <div class="grid grid-cols-2 gap-4">
-                            ${match.player_list.map(p => `
+                            ${match.player_list.map(p => {
+                                const initial = p && p.length > 0 ? p[0].toUpperCase() : "?";
+                                return `
                                 <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
-                                    <div class="w-8 h-8 rounded-full bg-primary-container text-black flex items-center justify-center font-bold text-xs">${p[0].toUpperCase()}</div>
-                                    <span class="text-sm font-bold">${p}</span>
-                                </div>
-                            `).join('')}
-                            ${Array(match.roster_size - match.current_roster).fill(0).map(() => `
+                                    <div class="w-8 h-8 rounded-full bg-primary-container text-black flex items-center justify-center font-bold text-xs">${initial}</div>
+                                    <span class="text-sm font-bold truncate">${p}</span>
+                                </div>`;
+                            }).join('')}
+                            ${Array(Math.max(0, match.roster_size - match.current_roster)).fill(0).map(() => `
                                 <div class="border border-dashed border-white/10 rounded-lg p-3 text-outline/30 text-xs font-bold uppercase italic text-center">Open Slot</div>
                             `).join('')}
                         </div>
@@ -134,8 +179,8 @@
 
                 <div class="space-y-6">
                     <div class="p-6 rounded-2xl bg-primary-container/5 border border-primary-container/20">
-                        <div class="text-[10px] font-bold text-primary-container uppercase tracking-widest mb-1">Entry Fee</div>
-                        <div class="text-4xl font-headline font-black mb-4">£${match.cost}</div>
+                        <div class="text-[10px] font-bold text-primary-container uppercase tracking-widest mb-1">Game Fee</div>
+                        <div class="text-4xl font-headline font-black mb-4 ${opacityClass}">${match.cost}</div>
                         ${participationBtn}
                         ${adminBtn}
                     </div>
@@ -145,21 +190,68 @@
         `;
     }
 
+    // --- Modal Control Functions ---
+    function openConfirmModal(title, message, isDestructive, actionCallback) {
+        const modal = document.getElementById('confirmModal');
+        const actionBtn = document.getElementById('confirmActionBtn');
+        const icon = document.getElementById('confirmIcon');
+
+        document.getElementById('confirmTitle').innerText = title;
+        document.getElementById('confirmMessage').innerText = message;
+
+        if (isDestructive) {
+            actionBtn.className = "flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest bg-error text-white hover:bg-error/80 transition-colors";
+            icon.className = "material-symbols-outlined text-4xl mb-4 text-error";
+            icon.innerText = "delete_forever";
+        } else {
+            actionBtn.className = "flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest bg-primary-container text-black hover:bg-[#b5e500] transition-colors";
+            icon.className = "material-symbols-outlined text-4xl mb-4 text-primary-container";
+            icon.innerText = "restore";
+        }
+
+        pendingAction = actionCallback;
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+        pendingAction = null;
+    }
+
+    function executeConfirm() {
+        if (pendingAction) pendingAction();
+        closeConfirmModal();
+    }
+
+    // --- API Interactions ---
+    function promptCancel() {
+        openConfirmModal("Cancel Match", "Are you sure you want to call off this game?", true, toggleCancelState);
+    }
+
+    function promptRestore() {
+        openConfirmModal("Restore Match", "Ready to put this game back on the schedule?", false, toggleCancelState);
+    }
+
+    async function toggleCancelState() {
+        const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}/toggle-cancel`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (resp.ok) {
+            // Re-fetch details to update UI without reloading the page
+            fetchMatchDetails();
+        }
+    }
+
     async function toggleJoin() {
         const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}/toggle-join`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        fetchMatchDetails()
-    }
-
-    async function cancelMatch() {
-        if (!confirm("Are you sure you want to cancel this match? This cannot be undone.")) return;
-        const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (resp.ok) window.location.href = 'dashboard.html';
+        fetchMatchDetails();
     }
 </script>
 </body>

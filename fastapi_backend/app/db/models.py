@@ -30,7 +30,8 @@ class Match(Base):
     title = Column(String)
     sport = Column(String)
     duration = Column(String)
-    date = Column(String)
+    date_event = Column(String)
+    date_modified = Column(DateTime, server_default=func.now(), onupdate=func.now())
     time = Column(String)
     location = Column(String)
     roster_size = Column(Integer, default=0)
@@ -48,6 +49,6 @@ class MatchPlayer(Base):
     match_id = Column(String, ForeignKey("matches.id"))
     user_id = Column(String, ForeignKey("users.id"))
     status = Column(String, default="confirmed")
-    joined_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    date_modified = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     match = relationship("Match", back_populates="players")

@@ -88,14 +88,15 @@ async def get_matches(
             user_matches.append({
                 "id": m.id,
                 "title": m.title,
-                "date": m.date,
+                "date": m.date_event,
                 "time": m.time,
                 "location": m.location,
                 "cost": m.cost,
                 "is_host": is_host,
+                "is_cancelled": m.is_cancelled,
                 "is_joined": is_joined,
                 "joined": len(m.players),
-                "max": m.roster_size
+                "roster_size": m.roster_size
             })
 
     return user_matches[::-1]
@@ -114,7 +115,7 @@ async def create_match(
         title=match.title,
         sport=match.sport,
         duration=match.duration,
-        date=match.date,
+        date=match.date_event,
         time=match.time,
         location=match.location,
         roster_size=match.roster_size,
@@ -137,17 +138,25 @@ async def get_match_details(
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
 
-    player_list = []
+    # 1. Filter the list for the UI (only show confirmed players)
+    # 2. Determine if the current viewer is one of those confirmed players
+    active_players = []
+    is_joined = False
+
     for p in match.players:
         if p.status == "confirmed":
             user_record = db.query(models.User).filter(models.User.id == p.user_id).first()
-            username = user_record.username if user_record else "Unknown Player"
-            player_list.append(username)
+            username = user_record.username if user_record else "Unknown"
+            active_players.append(username)
+
+            # Check if this confirmed player is the person currently logged in
+            if p.user_id == current_user["id"]:
+                is_joined = True
 
     return {
         "id": match.id,
         "title": match.title,
-        "date": match.date,
+        "date": match.date_event,
         "time": match.time,
         "location": match.location,
         "cost": match.cost,
@@ -155,9 +164,10 @@ async def get_match_details(
         "duration": match.duration,
         "host_username": match.host.username,
         "is_host": (match.host_id == current_user["id"]),
-        "is_joined": any(p.user_id == current_user["id"] for p in match.players),
-        "current_roster": len(player_list),
-        "player_list": player_list
+        "current_roster": len(active_players),
+        "player_list": active_players,
+        "is_cancelled": match.is_cancelled,
+        "is_joined": is_joined
     }
 
 
@@ -198,8 +208,8 @@ async def toggle_join(
     return {"status": "success", "action": action}
 
 
-@app.delete("/api/matches/{match_id}")
-async def cancel_match(
+@app.post("/api/matches/{match_id}/toggle-cancel")
+async def toggle_cancel_match(
         match_id: str,
         current_user: dict = Depends(get_current_user),
         db: Session = Depends(get_db)
@@ -212,11 +222,13 @@ async def cancel_match(
     if match.host_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="Only the host can cancel this match")
 
-    # Cascading delete will handle match_players if configured in models.py
-    db.delete(match)
+    # The Python way to invert a boolean
+    match.is_cancelled = not match.is_cancelled
+
     db.commit()
 
-    return {"status": "success", "message": "Match cancelled"}
+    status_text = "cancelled" if match.is_cancelled else "restored"
+    return {"status": "success", "message": f"Match {status_text}"}
 
 
 # Server: uvicorn app.main:app --reload
