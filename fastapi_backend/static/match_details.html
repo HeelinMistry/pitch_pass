@@ -12,7 +12,8 @@
             theme: { extend: { colors: { "primary": "#f3ffca", "primary-container": "#cafd00", "surface": "#0e0e0e", "on-surface": "#ffffff", "outline": "#767575", "error": "#ff7351" }}}
         }
     </script>
-    <style>body { opacity: 0; transition: opacity 0.5s ease; }</style>
+    <style>body { opacity: 0; transition: opacity 0.5s ease; }
+            #copyIcon { transition: all 0.2s ease; }</style>
 </head>
 <body class="bg-surface text-on-surface font-body">
 <div id="confirmModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
@@ -100,6 +101,22 @@
     let pendingAction = null;
 
     function renderDetails(match) {
+        const shareUrl = window.location.href;
+
+        const shareComponent = `
+            <div class="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+                <div class="text-[10px] font-bold text-outline uppercase tracking-widest">Share with Squad</div>
+                <div class="flex items-center gap-2 bg-black/20 p-2 rounded-lg border border-white/5">
+                    <input type="text" readonly value="${shareUrl}"
+                        id="shareInput"
+                        class="bg-transparent border-none text-[10px] text-primary-container font-mono w-full focus:ring-0 cursor-default">
+                    <button onclick="copyShareLink()" class="p-2 hover:bg-white/10 rounded-md transition-colors text-primary-container" title="Copy Link">
+                        <span class="material-symbols-outlined text-sm" id="copyIcon">content_copy</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
         const container = document.getElementById('match-content');
 
         let participationBtn = "";
@@ -184,6 +201,7 @@
                         ${participationBtn}
                         ${adminBtn}
                     </div>
+                    ${shareComponent}
                     <p class="text-[10px] text-outline uppercase text-center leading-relaxed">Cancelations allowed up to 24h before kick-off. Reliability index will be affected by late drop-outs.</p>
                 </div>
             </div>
@@ -224,6 +242,25 @@
     function executeConfirm() {
         if (pendingAction) pendingAction();
         closeConfirmModal();
+    }
+
+    function copyShareLink() {
+        const copyInput = document.getElementById("shareInput");
+        const copyIcon = document.getElementById("copyIcon");
+
+        navigator.clipboard.writeText(copyInput.value).then(() => {
+            // Visual feedback using your kinetic style
+            copyIcon.innerText = "check_circle";
+            copyIcon.style.color = "#cafd00"; // Primary container color
+
+            // Return to original state after 2 seconds
+            setTimeout(() => {
+                copyIcon.innerText = "content_copy";
+                copyIcon.style.color = "";
+            }, 2000);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+        });
     }
 
     // --- API Interactions ---
