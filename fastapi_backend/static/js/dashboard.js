@@ -155,14 +155,22 @@ function renderMatches(matches) {
         const isCancelled = match.is_cancelled === true;
         const isJoined = match.is_joined === true;
 
-        const card = `
-            <div class="match-card group relative rounded-2xl overflow-hidden flex flex-col md:flex-row transition-all border
-                ${isCancelled ? 'border-red-500/30 opacity-60 grayscale-[0.5]' : 'border-white/5 bg-white/5'}
-                ${isJoined ? 'border-white/5 bg-white/5' : 'border-pitch-green/20 bg-pitch-green/[0.02] shadow-[0_0_20px_rgba(202,253,0,0.05)]'}">
+        let dateBoxClasses = "";
+        if (isCancelled) {
+            // Priority 1: Cancelled Style
+            dateBoxClasses = "cancelled-date-box opacity-50 grayscale-[0.2]";
+        } else if (isJoined) {
+            // Priority 2: Joined Style (Muted/Settled)
+            dateBoxClasses = "joined-date-box opacity-70";
+        } else {
+            // Priority 3: Neutral Style (Neon/Active - "Grab Spot")
+            dateBoxClasses = "date-box opacity-60 grayscale-[0.5]";
+        }
 
-                <div class="date-box p-6 md:w-24
-                ${isCancelled ? 'bg-red-500 text-white' : 'bg-white-500 text-black'}
-                ${isJoined ? 'bg-white-500 text-white' : 'bg-pitch-green text-black'}">
+        const card = `
+            <div class="match-card group relative rounded-2xl overflow-hidden flex flex-col md:flex-row transition-all border">
+
+                <div class="p-6 md:w-24 ${dateBoxClasses}">
                     <span class="text-3xl font-black leading-none">${day}</span>
                     <span class="text-[10px] font-bold tracking-widest">${month}</span>
                 </div>

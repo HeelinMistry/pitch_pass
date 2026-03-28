@@ -2,7 +2,9 @@
 
 :root {
     --primary: #f3ffca;
-    --primary-container: #cafd00; /* The PitchPass Neon */
+    --primary-container: #cafd00;
+    --secondary-container: #333333;
+    --cancelled-container: #ff0000;
     --surface: #0e0e0e;
     --on-surface: #ffffff;
     --outline: #767575;
@@ -69,6 +71,12 @@ body {
 
 /* Pitch Card Hover Glow */
 .match-card {
+    background: rgba(51, 51, 51, 1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.joined-match-card {
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid rgba(255, 255, 255, 0.05);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -86,22 +94,36 @@ body {
 }
 
 .line-through {
-    text-decoration-thickness: 3px;
-    text-decoration-color: rgba(255, 115, 81, 0.4);
-}
-
-.bg-error\/20 {
-    background-color: rgba(255, 115, 81, 0.2);
-}
-
-/* Modal text and icon alignment */
-#confirmIcon {
-    font-variation-settings: 'FILL' 1, 'wght' 700;
+    text-decoration-thickness: 2px;
+    text-decoration-color: rgba(239, 68, 68, 0.5); /* Soft Red */
 }
 
 /* Specific button styles for the date box */
 .date-box {
+    background: var(--secondary-container);
+    text: white;
+    color: white;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.joined-date-box {
     background: var(--primary-container);
+    color: black;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.cancelled-date-box {
+    background: var(--cancelled-container);
     color: black;
     min-width: 80px;
     display: flex;
