@@ -74,17 +74,34 @@ async def get_matches(
         db: Session = Depends(get_db)
 ):
     user_id = current_user["id"]
-
-    # Efficiently fetch matches where user is host OR a player
-    # We leverage the relationships defined in models.py
     all_matches = db.query(models.Match).all()
     user_matches = []
 
     for m in all_matches:
+        # 1. Check if the current user is the host
         is_host = (m.host_id == user_id)
-        is_joined = any(p.user_id == user_id for p in m.players)
 
-        if is_host or is_joined:
+        # 2. Check if the current user is a "confirmed" player
+        # Logic: Look for a record in match_players that matches user_id AND status
+        is_joined = any(
+            p.user_id == user_id and p.status == "confirmed"
+            for p in m.players
+        )
+
+        # 3. Build the player list for the frontend
+        # Filter only confirmed players to show in the UI roster
+        confirmed_player_names = []
+        for p in m.players:
+            if p.status == "confirmed":
+                # Optimization: If you have a 'user' relationship on MatchPlayer,
+                # use p.user.username instead of a manual db.query
+                user_record = db.query(models.User).filter(models.User.id == p.user_id).first()
+                confirmed_player_names.append(user_record.username if user_record else "Unknown")
+
+        if is_host or any(
+            p.user_id == user_id
+            for p in m.players
+        ):
             user_matches.append({
                 "id": m.id,
                 "title": m.title,

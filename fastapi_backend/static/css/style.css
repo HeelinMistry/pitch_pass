@@ -86,8 +86,17 @@ body {
 }
 
 .line-through {
-    text-decoration-thickness: 2px;
-    text-decoration-color: rgba(239, 68, 68, 0.5); /* Soft Red */
+    text-decoration-thickness: 3px;
+    text-decoration-color: rgba(255, 115, 81, 0.4);
+}
+
+.bg-error\/20 {
+    background-color: rgba(255, 115, 81, 0.2);
+}
+
+/* Modal text and icon alignment */
+#confirmIcon {
+    font-variation-settings: 'FILL' 1, 'wght' 700;
 }
 
 /* Specific button styles for the date box */

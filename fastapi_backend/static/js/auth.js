@@ -8,7 +8,7 @@ export function getRedirectTarget() {
     const urlParams = new URLSearchParams(window.location.search);
     let target = urlParams.get('redirect');
 
-    if (!target || target.includes('login.html') || target.includes('register.html')) {
+    if (!target || target.includes('login.html' || target.trim() === "")) {
         return 'dashboard.html';
     }
     return decodeURIComponent(target);
