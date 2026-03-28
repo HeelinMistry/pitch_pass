@@ -1,33 +1,24 @@
-const API_URL = 'http://localhost:8000/api';
+import { apiRequest } from './api.js';
+import { initPageTransition } from './ui.js';
+
 const urlParams = new URLSearchParams(window.location.search);
 const matchId = urlParams.get('id');
-const token = localStorage.getItem('pitchpass_token');
 
 export async function initMatchDetails() {
-    // If no token, redirect to login and SAVE this current location
-    if (!token) {
-        const currentPath = window.location.pathname + window.location.search;
-        window.location.href = `login.html?redirect=${encodeURIComponent(currentPath)}`;
-        return;
-    }
+    initPageTransition();
+    if (!matchId) return window.location.href = 'dashboard.html';
 
-    // If for some reason the ID is missing, then the dashboard is the safest fallback
-    if (!matchId) {
-        window.location.href = 'dashboard.html';
-        return;
-    }
-
-    await fetchMatchDetails();
+    fetchMatchDetails();
 }
 
 async function fetchMatchDetails() {
     try {
-        const resp = await fetch(`${API_URL}/matches/${matchId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (resp.ok) {
-            const match = await resp.json();
+        const match = await apiRequest(`/matches/${matchId}`);
+
+        if (match) {
             renderDetails(match);
+        } else {
+            console.error("Match data is empty");
         }
     } catch (err) {
         console.error("Failed to load match:", err);
@@ -134,11 +125,8 @@ window.copyShareLink = () => {
 };
 
 window.toggleJoin = async () => {
-    const resp = await fetch(`${API_URL}/matches/${matchId}/toggle-join`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (resp.ok) fetchMatchDetails();
+    const resp = await apiRequest(`/matches/${matchId}/toggle-join`, 'POST');
+    if (resp) fetchMatchDetails();
 };
 
 window.promptCancel = () => {
