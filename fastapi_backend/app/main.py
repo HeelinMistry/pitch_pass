@@ -115,7 +115,7 @@ async def create_match(
         title=match.title,
         sport=match.sport,
         duration=match.duration,
-        date=match.date_event,
+        date_event=match.date_event,
         time=match.time,
         location=match.location,
         roster_size=match.roster_size,

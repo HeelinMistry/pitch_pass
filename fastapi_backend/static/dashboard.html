@@ -4,21 +4,21 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>PitchPass | Pro Dashboard</title>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
-    <script id="tailwind-config">
+    <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#f3ffca", "primary-container": "#cafd00",
-                        "surface": "#0e0e0e", "surface-container-highest": "#262626",
-                        "surface-container-high": "#20201f", "surface-container-low": "#131313",
-                        "on-surface": "#ffffff", "outline": "#767575", "error": "#ff7351",
-                        "on-primary-fixed-variant": "#526900"
+                        "pitch-green": "#cafd00",
+                        "pitch-outline": "#767575",
+                        "surface-dark": "#0e0e0e",
+                        "card-bg": "rgba(255, 255, 255, 0.03)"
                     },
                     fontFamily: { "headline": ["Space Grotesk"], "body": ["Manrope"] }
                 }
@@ -26,344 +26,148 @@
         }
     </script>
     <style>
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .pitch-grid-bg { background-image: radial-gradient(#767575 1px, transparent 1px); background-size: 24px 24px; opacity: 0.05; }
-        .glass-card { background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(24px); }
+        .pitch-grid-bg { background-image: radial-gradient(#767575 1px, transparent 1px); background-size: 32px 32px; opacity: 0.03; }
         .step-gradient { background: linear-gradient(135deg, #f3ffca 0%, #cafd00 100%); }
-        body { opacity: 0; transition: opacity 0.5s ease-in-out; }
+        /* Scrollbar styling for a pro look */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #262626; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-black overflow-x-hidden">
-
-<div id="createMatchModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
-    <div class="bg-surface-container-low w-full max-w-2xl rounded-2xl border border-white/10 shadow-2xl flex flex-col max-h-[90vh]">
-
-        <div class="flex justify-between items-center p-6 border-b border-white/5">
-            <h2 class="font-headline text-2xl font-bold uppercase tracking-tight text-primary-container flex items-center gap-2">
-                <span class="material-symbols-outlined">add_circle</span> Launch Match
-            </h2>
-            <button onclick="closeModal()" class="text-outline hover:text-white transition-colors">
-                <span class="material-symbols-outlined text-3xl">close</span>
-            </button>
-        </div>
-
-        <div class="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
-            <div class="space-y-4">
-                <input id="matchTitle" class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 font-headline text-xl placeholder:text-outline/50" placeholder="Match Identity (e.g. Wednesday Elite)" type="text"/>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <input id="matchDate" class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 text-sm" type="date"/>
-                    <input id="matchTime" class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 text-sm" type="time"/>
-                </div>
-
-                <div class="relative">
-                    <input id="matchLocation" class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-lg p-4 pl-12 text-sm placeholder:text-outline/50" placeholder="The Pitch / Location" type="text"/>
-                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">location_on</span>
-                </div>
-            </div>
-
-            <hr class="border-white/5">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div class="bg-surface-container-high p-4 rounded-xl flex items-center justify-between">
-                        <span class="text-xs font-bold uppercase tracking-wider text-outline">Roster</span>
-                        <div class="flex items-center gap-3">
-                            <button id="rosMinus" class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-white/10"><span class="material-symbols-outlined text-sm">remove</span></button>
-                            <span id="rosterDisplay" class="font-headline text-xl font-bold w-6 text-center">14</span>
-                            <button id="rosPlus" class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-white/10"><span class="material-symbols-outlined text-sm">add</span></button>
-                        </div>
-                    </div>
-
-                    <div class="relative bg-surface-container-high rounded-xl overflow-hidden">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-headline font-bold text-primary-container">R</span>
-                        <input id="matchCost" class="w-full bg-transparent border-none focus:ring-0 p-4 pl-8 text-xl font-headline font-bold" placeholder="Cost per player" type="number"/>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <select id="sportType" class="w-full bg-surface-container-high border-none focus:ring-2 focus:ring-primary-container rounded-xl p-4 text-sm font-bold uppercase tracking-wider cursor-pointer">
-                        <option value="indoor_soccer">Indoor Soccer</option>
-                    </select>
-
-                    <div class="bg-surface-container-high p-4 rounded-xl flex items-center justify-between">
-                        <span class="text-xs font-bold uppercase tracking-wider text-outline">Duration</span>
-                        <div class="flex items-center gap-3">
-                            <button id="durMinus" class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-white/10"><span class="material-symbols-outlined text-sm">remove</span></button>
-                            <span id="durationLabel" class="font-bold text-sm text-primary-container w-16 text-center">1.0 Hr</span>
-                            <button id="durPlus" class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center hover:bg-white/10"><span class="material-symbols-outlined text-sm">add</span></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="p-6 border-t border-white/5 bg-surface-container-high">
-            <button id="generateBtn" class="w-full py-4 rounded-xl font-headline font-bold text-on-primary-fixed-variant step-gradient uppercase tracking-widest active:scale-95 transition-all">
-                Create Match
-            </button>
-        </div>
-    </div>
-</div>
+<body class="bg-surface text-on-surface font-body selection:bg-pitch-green selection:text-black overflow-x-hidden">
 
 <div class="flex min-h-screen relative">
-    <aside class="hidden md:flex flex-col h-screen w-64 border-r border-[#262626] bg-[#0e0e0e] fixed left-0 top-0 z-40 p-4">
-        <div class="mb-10 px-2">
-            <span class="text-xl font-black text-[#cafd00] font-headline tracking-tighter">PitchPass</span>
+    <div class="pitch-grid-bg fixed inset-0 pointer-events-none"></div>
+
+    <aside class="flex flex-col h-screen w-64 border-r border-white/5 bg-[#0e0e0e] fixed left-0 top-0 z-40 p-6">
+        <div class="mb-12">
+            <h1 class="font-headline text-3xl font-black uppercase italic">
+                Pitch<span class="text-[#cafd00]">Pass</span>
+            </h1>
         </div>
-        <nav class="flex-1 space-y-2">
-            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 bg-[#cafd00] text-black rounded-lg font-bold transition-colors">
+
+        <nav class="flex-1">
+            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 bg-[#cafd00]/10 text-[#cafd00] rounded-xl font-bold">
                 <span class="material-symbols-outlined">dashboard</span>
                 <span>Dashboard</span>
             </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-[#e4e2e1] hover:bg-[#262626] rounded-lg transition-colors group">
-                <span class="material-symbols-outlined group-hover:text-[#cafd00]">sports_soccer</span>
-                <span>My Matches</span>
-            </a>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-[#e4e2e1] hover:bg-[#262626] rounded-lg transition-colors group">
-                <span class="material-symbols-outlined group-hover:text-[#cafd00]">person</span>
-                <span>Profile</span>
-            </a>
         </nav>
-        <div class="mt-auto p-2">
-            <button onclick="openModal()" class="w-full bg-gradient-to-br from-primary to-primary-container text-black font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
-                <span class="material-symbols-outlined">add_circle</span>
-                Create Match
+
+        <div class="mt-auto">
+            <button onclick="openModal()" class="w-full py-4 rounded-xl font-headline font-black text-black bg-[#cafd00] uppercase tracking-widest hover:opacity-90 transition-all">
+                Launch Match
             </button>
         </div>
     </aside>
 
-    <main class="flex-1 md:ml-64 p-6 md:p-10 relative">
-        <div class="pitch-grid-bg absolute inset-0 pointer-events-none"></div>
-        <div class="relative z-10 mb-12">
-            <h1 class="text-6xl md:text-8xl font-black font-headline leading-tight tracking-tighter uppercase italic">
-                Next <br/>Game <span class="text-primary-container">Ready</span>
-            </h1>
-        </div>
+    <main class="flex-1 md:ml-64 p-6 md:p-12 relative z-10">
+        <header class="mb-16">
+            <h2 class="text-6xl md:text-9xl font-black font-headline leading-none tracking-tighter uppercase italic opacity-90">
+                Next <br/>Game <span class="text-pitch-green">Ready</span>
+            </h2>
+        </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 relative z-10">
-            <div id="match-container" class="lg:col-span-8 space-y-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="font-headline text-2xl font-bold tracking-tight">Upcoming Matches</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div id="match-container" class="lg:col-span-8 space-y-8">
+                <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                    <h3 class="font-headline text-xl font-bold uppercase tracking-widest text-pitch-green">Active Pitch List</h3>
                 </div>
-            </div>
+                </div>
 
-            <div class="lg:col-span-4 space-y-8">
-                <div class="space-y-4">
-                    <h3 class="font-headline text-lg font-bold uppercase tracking-widest px-2">Recent Activity</h3>
-                    <div class="space-y-3">
-                        <div class="glass-card p-4 rounded-xl border-l-4 border-primary-container flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container">
-                                <span class="material-symbols-outlined">sports_soccer</span>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold">System Online</p>
-                                <p class="text-xs text-outline">Logged in securely via Passkey</p>
-                                <p class="text-[10px] text-primary-container font-bold mt-1 uppercase">Just Now</p>
-                            </div>
+            <div class="lg:col-span-4">
+                <div class="glass-card p-6 border-white/5">
+                    <h3 class="font-headline text-xs font-black uppercase tracking-[0.2em] text-pitch-outline mb-6">Recent Activity</h3>
+                    <div id="activity-feed" class="space-y-6">
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
     </main>
 </div>
 
-<script>
-    // --- 1. INITIALIZATION ---
-    window.onload = () => document.body.style.opacity = "1";
+<div id="createMatchModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/80 backdrop-blur-md p-4 opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-xl border-white/10 shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="flex justify-between items-center p-8 border-b border-white/5">
+            <h2 class="font-headline text-xl font-black uppercase italic tracking-tight text-pitch-green flex items-center gap-2">
+                Draft New Match
+            </h2>
+            <button onclick="closeModal()" class="text-pitch-outline hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
 
-    // --- 2. MODAL LOGIC ---
-    const modal = document.getElementById('createMatchModal');
+        <div class="p-8 overflow-y-auto space-y-6 custom-scrollbar">
+            <div class="space-y-1">
+                <label class="text-[10px] uppercase font-bold tracking-widest text-pitch-outline ml-1">Atmosphere</label>
+                <select id="sportType" class="kinetic-input w-full p-4 rounded-xl font-bold uppercase tracking-wider cursor-pointer appearance-none">
+                    <option value="indoor_soccer">Indoor Soccer</option>
+                    <option value="tennis">Tennis</option>
+                    <option value="paddle">Paddle</option>
+                </select>
+            </div>
 
-    function openModal() {
-        modal.classList.remove('hidden');
-        // Small delay to allow display:block to apply before animating opacity
-        setTimeout(() => modal.classList.remove('opacity-0'), 10);
-    }
+            <div class="space-y-1">
+                <label class="text-[10px] uppercase font-bold tracking-widest text-pitch-outline ml-1">Match Identity</label>
+                <input id="matchTitle" class="kinetic-input w-full p-4 rounded-xl font-headline" placeholder="e.g. Wednesday Elite 5-a-side" type="text"/>
+            </div>
 
-    function closeModal() {
-        modal.classList.add('opacity-0');
-        setTimeout(() => modal.classList.add('hidden'), 300); // Wait for transition
-    }
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-bold tracking-widest text-pitch-outline ml-1">Kick-off Date</label>
+                    <input id="matchDate" class="kinetic-input w-full p-4 rounded-xl text-sm" type="date"/>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-bold tracking-widest text-pitch-outline ml-1">Start Time</label>
+                    <input id="matchTime" class="kinetic-input w-full p-4 rounded-xl text-sm" type="time"/>
+                </div>
+            </div>
 
-    // --- 3. STEPPER LOGIC ---
-    let rosterCount = 14;
-    document.getElementById('rosMinus').onclick = () => { if(rosterCount > 2) { rosterCount--; document.getElementById('rosterDisplay').innerText = rosterCount; } };
-    document.getElementById('rosPlus').onclick = () => { rosterCount++; document.getElementById('rosterDisplay').innerText = rosterCount; };
-
-    let duration = 1.0;
-    const updateDuration = () => document.getElementById('durationLabel').innerText = `${duration.toFixed(1)} ${duration === 1 ? 'Hr' : 'Hrs'}`;
-    document.getElementById('durMinus').onclick = () => { if (duration > 1.0) { duration -= 0.5; updateDuration(); } };
-    document.getElementById('durPlus').onclick = () => { if (duration < 2.0) { duration += 0.5; updateDuration(); } };
-
-    // --- 4. MATCH CREATION LOGIC ---
-    document.getElementById('generateBtn').onclick = async () => {
-        const token = localStorage.getItem('pitchpass_token');
-        if (!token) return window.location.href = 'login.html';
-
-        const costInput = document.getElementById('matchCost');
-        const costValue = costInput ? parseFloat(costInput.value) : 0;
-
-        const payload = {
-            title: document.getElementById('matchTitle')?.value || "Untitled Match",
-            sport: document.getElementById('sportType').value,
-            duration: duration,
-            date: document.getElementById('matchDate')?.value || "TBD",
-            time: document.getElementById('matchTime')?.value || "TBD",
-            location: document.getElementById('matchLocation')?.value || "TBD",
-            roster_size: rosterCount,
-            cost: isNaN(costValue) ? 0 : costValue
-        };
-
-        // UI Feedback: Change button text while loading
-        const btn = document.getElementById('generateBtn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "Deploying Match...";
-
-        try {
-            const resp = await fetch('http://127.0.0.1:8000/api/matches', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payload)
-            });
-
-            if (resp.ok) {
-                // Success! Close modal, clear form, refresh dashboard silently
-                closeModal();
-                loadDashboard();
-                document.getElementById('matchTitle').value = '';
-                document.getElementById('matchCost').value = '';
-            } else {
-                alert("Creation failed. Check API.");
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            btn.innerHTML = originalText;
-        }
-    };
-
-    // --- 5. DASHBOARD FETCH LOGIC ---
-    async function loadDashboard() {
-        const token = localStorage.getItem('pitchpass_token');
-        if (!token) {
-            window.location.href = `login.html`;
-            return;
-        }
-
-        try {
-            const response = await fetch('http://127.0.0.1:8000/api/dashboard/matches', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (response.status === 401) {
-                localStorage.removeItem('pitchpass_token');
-                return window.location.href = `login.html`;
-            }
-
-            const matches = await response.json();
-            renderMatches(matches);
-            renderActivityFeed(matches);
-        } catch (err) {
-            console.error("API Sync Failed", err);
-        }
-    }
-
-    function renderMatches(matches) {
-        const container = document.getElementById('match-container');
-        const headerHtml = container.firstElementChild.outerHTML;
-        container.innerHTML = headerHtml;
-
-        if(matches.length === 0) {
-            container.insertAdjacentHTML('beforeend', '<p class="text-outline italic p-4">No matches drafted yet. Click Create Match to start.</p>');
-            return;
-        }
-
-        matches.forEach(match => {
-            let day = "--", monthStr = "TBD";
-            if (match.date) {
-                const d = new Date(match.date);
-                if (!isNaN(d)) {
-                    day = d.getDate().toString().padStart(2, '0');
-                    monthStr = d.toLocaleString('default', { month: 'short' }).toUpperCase();
-                }
-            }
-
-            // Dynamic styling based on cancelled state
-            const opacityClass = match.is_cancelled ? "opacity-50 grayscale" : "";
-            const badgeHtml = match.is_cancelled
-                ? `<span class="absolute top-4 right-4 bg-error text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest z-20">Cancelled</span>`
-                : "";
-
-            // Notice how the button now points to match_details.html with the ID parameter!
-            const card = `
-                <div class="group relative bg-surface-container-high rounded-xl overflow-hidden flex flex-col md:flex-row hover:border-primary-container border border-transparent transition-all ${opacityClass}">
-                    ${badgeHtml}
-                    <div class="w-full md:w-32 bg-surface-container-highest md:bg-primary-container flex md:flex-col items-center justify-center p-4 md:p-0 md:text-black text-white">
-                        <span class="font-headline text-4xl font-black leading-none">${day}</span>
-                        <span class="font-headline text-sm font-bold uppercase tracking-widest">${monthStr}</span>
-                    </div>
-                    <div class="flex-1 p-6 flex flex-col md:flex-row justify-between gap-6">
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-3 text-outline md:text-on-surface">
-                                <span class="material-symbols-outlined text-sm">schedule</span>
-                                <span class="text-sm font-bold uppercase tracking-widest">${match.time || "TBD"} (Indoor Soccer)</span>
-                            </div>
-                            <h3 class="font-headline text-3xl font-bold uppercase">${match.title}</h3>
-                            <div class="flex items-center gap-2 text-outline">
-                                <span class="material-symbols-outlined text-base">location_on</span>
-                                <span class="text-sm">${match.location}</span>
-                            </div>
-                            <div class="pt-4 flex items-center gap-4">
-                                <span class="text-xs font-bold text-primary-container uppercase tracking-tighter bg-primary-container/10 px-3 py-1 rounded-full">Cost: R${match.cost || 0}</span>
-                            </div>
-                        </div>
-                        <div class="flex flex-col justify-end gap-3 min-w-[160px]">
-                            <button onclick="window.location.href='match_details.html?id=${match.id}'" class="w-full bg-primary-container text-black font-bold py-3 rounded-lg hover:bg-primary transition-all active:scale-95 uppercase tracking-wider text-sm">
-                                View & Join
-                            </button>
-                        </div>
-                    </div>
-                </div>`;
-            container.insertAdjacentHTML('beforeend', card);
-        });
-    }
-
-    function renderActivityFeed(matches) {
-        const activityContainer = document.querySelector('.space-y-3'); // Grabs the Recent Activity div
-        activityContainer.innerHTML = ''; // Clear hardcoded stuff
-
-        // Filter matches the user is actually involved in
-        const userMatches = matches.filter(m => m.is_host || m.is_joined);
-
-        if (userMatches.length === 0) {
-            activityContainer.innerHTML = `<p class="text-outline text-xs italic">No recent activity.</p>`;
-            return;
-        }
-
-        userMatches.slice(0, 4).forEach(match => {
-            let action = match.is_host ? "Drafted Match" : "Joined Squad";
-            let icon = match.is_host ? "add_circle" : "group_add";
-            let color = match.is_host ? "tertiary-container" : "primary-container";
-
-            const activityHtml = `
-                <div class="glass-card p-4 rounded-xl border-l-4 border-${color} flex items-start gap-4 cursor-pointer hover:bg-white/5 transition-colors" onclick="window.location.href='match_details.html?id=${match.id}'">
-                    <div class="w-10 h-10 rounded-full bg-${color}/10 flex items-center justify-center text-${color}">
-                        <span class="material-symbols-outlined">${icon}</span>
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold">${action}</p>
-                        <p class="text-xs text-outline">${match.title}</p>
-                        <p class="text-[10px] text-${color} font-bold mt-1 uppercase">${match.date}</p>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-bold tracking-widest text-pitch-outline ml-1">Match Duration</label>
+                    <div class="bg-white/5 p-4 rounded-xl flex items-center justify-between border border-white/5">
+                        <button id="durMinus" class="text-pitch-green hover:scale-125 transition-transform"><span class="material-symbols-outlined text-sm">remove</span></button>
+                        <span id="durationLabel" class="font-headline text-sm font-bold text-pitch-green">1.0 Hr</span>
+                        <button id="durPlus" class="text-pitch-green hover:scale-125 transition-transform"><span class="material-symbols-outlined text-sm">add</span></button>
                     </div>
                 </div>
-            `;
-            activityContainer.insertAdjacentHTML('beforeend', activityHtml);
-        });
-    }
+                <div class="space-y-1">
+                    <label class="text-[10px] uppercase font-bold tracking-widest text-pitch-outline ml-1">Pitch Location</label>
+                    <input id="matchLocation" class="kinetic-input w-full p-4 rounded-xl text-sm h-[54px]" placeholder="The Pitch Venue" type="text"/>
+                </div>
+            </div>
 
-    loadDashboard();
+            <div class="grid grid-cols-2 gap-6 pt-2">
+                <div class="bg-white/5 p-4 rounded-xl flex items-center justify-between border border-white/5">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-pitch-outline">Squad Size</span>
+                    <div class="flex items-center gap-4">
+                        <button id="rosMinus" class="text-pitch-green hover:scale-125 transition-transform"><span class="material-symbols-outlined">remove</span></button>
+                        <span id="rosterDisplay" class="font-headline text-xl font-bold">14</span>
+                        <button id="rosPlus" class="text-pitch-green hover:scale-125 transition-transform"><span class="material-symbols-outlined">add</span></button>
+                    </div>
+                </div>
+                <div class="bg-white/5 p-4 rounded-xl flex items-center justify-between border border-white/5">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-pitch-outline">Cost (R)</span>
+                    <input id="matchCost" class="bg-transparent border-none focus:ring-0 text-right font-headline text-xl font-bold text-pitch-green w-20" placeholder="0" type="number"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <button id="generateBtn" class="w-full py-5 rounded-xl font-headline font-black text-black step-gradient uppercase tracking-[0.2em] active:scale-95 transition-all">
+                Deploy Match
+            </button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initDashboard } from '/static/js/dashboard.js';
+    window.onload = () => {
+        // Force visibility first so you can see what is happening
+        document.body.style.opacity = "1";
+        initDashboard();
+    };
 </script>
 </body>
 </html>
