@@ -1,295 +1,79 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
 <head>
-    <meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Match Details | PitchPass</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
+    <script>
         tailwind.config = {
             darkMode: "class",
-            theme: { extend: { colors: { "primary": "#f3ffca", "primary-container": "#cafd00", "surface": "#0e0e0e", "on-surface": "#ffffff", "outline": "#767575", "error": "#ff7351" }}}
+            theme: {
+                extend: {
+                    colors: {
+                        "pitch-green": "#cafd00",
+                        "pitch-outline": "#767575",
+                        "surface-dark": "#0e0e0e"
+                    },
+                    fontFamily: { "headline": ["Space Grotesk"], "body": ["Manrope"] }
+                }
+            }
         }
     </script>
-    <style>body { opacity: 0; transition: opacity 0.5s ease; }
-            #copyIcon { transition: all 0.2s ease; }</style>
+    <style>
+        .pitch-grid-bg { background-image: radial-gradient(#767575 1px, transparent 1px); background-size: 32px 32px; opacity: 0.03; }
+        .step-gradient { background: linear-gradient(135deg, #f3ffca 0%, #cafd00 100%); }
+    </style>
 </head>
-<body class="bg-surface text-on-surface font-body">
-<div id="confirmModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
-    <div class="bg-[#262626] w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl p-6 text-center">
-        <span id="confirmIcon" class="material-symbols-outlined text-4xl mb-4">warning</span>
-        <h3 id="confirmTitle" class="font-headline text-xl font-bold uppercase tracking-tight text-white mb-2">Confirm</h3>
-        <p id="confirmMessage" class="text-sm text-outline mb-6">Are you sure?</p>
-        <div class="flex gap-4">
-            <button onclick="closeConfirmModal()" class="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest bg-white/5 hover:bg-white/10 transition-colors">Abort</button>
-            <button id="confirmActionBtn" onclick="executeConfirm()" class="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-colors">Confirm</button>
+<body class="bg-surface text-on-surface font-body selection:bg-pitch-green selection:text-black">
+
+<div class="flex min-h-screen relative">
+    <div class="pitch-grid-bg fixed inset-0 pointer-events-none"></div>
+
+    <aside class="hidden md:flex flex-col h-screen w-64 border-r border-white/5 bg-surface fixed left-0 top-0 z-40 p-6">
+        <div class="mb-12">
+            <h1 class="font-headline text-3xl font-black uppercase italic tracking-tighter">
+                Pitch<span class="text-pitch-green">Pass</span>
+            </h1>
         </div>
-    </div>
+        <nav class="flex-1 space-y-2">
+            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-pitch-outline hover:text-white rounded-xl transition-all group">
+                <span class="material-symbols-outlined group-hover:text-pitch-green">dashboard</span>
+                <span class="text-xs uppercase tracking-widest font-bold">Dashboard</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 md:ml-64 p-6 md:p-12 relative z-10">
+        <div id="confirmModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/90 backdrop-blur-md p-4 opacity-0 transition-opacity duration-300">
+            <div class="glass-card w-full max-w-sm p-8 text-center border-white/10 shadow-2xl">
+                <span id="confirmIcon" class="material-symbols-outlined text-pitch-green text-4xl mb-4">warning</span>
+                <h3 id="confirmTitle" class="font-headline text-xl font-bold uppercase italic text-white mb-2">Confirm Action</h3>
+                <p id="confirmMessage" class="text-xs text-pitch-outline mb-8 leading-relaxed">Are you sure you want to proceed?</p>
+                <div class="flex gap-4">
+                    <button onclick="closeConfirmModal()" class="flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest bg-white/5 hover:bg-white/10 transition-colors">Abort</button>
+                    <button id="confirmActionBtn" class="flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest bg-pitch-green text-black transition-transform active:scale-95">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="window.location.href='dashboard.html'" class="flex items-center gap-2 text-pitch-outline hover:text-pitch-green mb-12 transition-colors group">
+            <span class="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
+            <span class="font-bold uppercase tracking-[0.2em] text-[10px]">Return to Pitch List</span>
+        </button>
+
+        <div id="match-content" class="space-y-12">
+            </div>
+    </main>
 </div>
-<main class="max-w-4xl mx-auto p-6 md:pt-20">
-    <button onclick="window.location.href='dashboard.html'" class="flex items-center gap-2 text-outline hover:text-primary-container mb-8 transition-colors">
-        <span class="material-symbols-outlined">arrow_back</span>
-        <span class="font-bold uppercase tracking-widest text-xs">Back to Dashboard</span>
-    </button>
 
-    <div id="match-content" class="space-y-10">
-        <div class="animate-pulse space-y-4">
-            <div class="h-12 bg-white/5 w-3/4 rounded-lg"></div>
-            <div class="h-6 bg-white/5 w-1/2 rounded-lg"></div>
-        </div>
-    </div>
-</main>
-
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const matchId = urlParams.get('id');
-    const token = localStorage.getItem('pitchpass_token');
-
+<script type="module">
+    import { initMatchDetails } from '/static/js/match_details.js';
     window.onload = () => {
-        document.body.style.opacity = "1";
-        if (!matchId) window.location.href = 'dashboard.html';
-        fetchMatchDetails();
+        initMatchDetails();
     };
-
-    async function fetchMatchDetails() {
-        const container = document.getElementById('match-content');
-        if (!token) {
-            // Grab the full current URL (e.g., http://localhost:3000/match_details.html?id=m_123)
-            const currentUrl = encodeURIComponent(window.location.href);
-            window.location.href = `login.html?redirect=${currentUrl}`;
-            return;
-        }
-        try {
-            console.log("Fetching details for Match ID:", matchId); // Debugging
-
-            const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (resp.status === 401) {
-                localStorage.removeItem('pitchpass_token');
-                const currentUrl = encodeURIComponent(window.location.href);
-                return window.location.href = `login.html?redirect=${currentUrl}`;
-            }
-
-            if (!resp.ok) {
-                const errorText = await resp.text();
-                throw new Error(`Server responded with ${resp.status}: ${errorText}`);
-            }
-
-            const match = await resp.json();
-            console.log("Data received:", match); // Debugging
-            renderDetails(match);
-
-        } catch (err) {
-            console.error("Fetch failed:", err);
-            container.innerHTML = `
-                <div class="p-8 bg-error/10 border border-error/20 rounded-2xl text-center">
-                    <span class="material-symbols-outlined text-error text-4xl mb-4">error</span>
-                    <h2 class="text-xl font-bold text-error uppercase">Failed to Load Match</h2>
-                    <p class="text-sm text-outline mt-2">${err.message}</p>
-                    <button onclick="location.reload()" class="mt-6 px-6 py-2 bg-white/10 rounded-lg text-xs font-bold uppercase">Retry</button>
-                </div>
-            `;
-        }
-    }
-
-    let pendingAction = null;
-
-    function renderDetails(match) {
-        const shareUrl = window.location.href;
-
-        const shareComponent = `
-            <div class="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                <div class="text-[10px] font-bold text-outline uppercase tracking-widest">Share with Squad</div>
-                <div class="flex items-center gap-2 bg-black/20 p-2 rounded-lg border border-white/5">
-                    <input type="text" readonly value="${shareUrl}"
-                        id="shareInput"
-                        class="bg-transparent border-none text-[10px] text-primary-container font-mono w-full focus:ring-0 cursor-default">
-                    <button onclick="copyShareLink()" class="p-2 hover:bg-white/10 rounded-md transition-colors text-primary-container" title="Copy Link">
-                        <span class="material-symbols-outlined text-sm" id="copyIcon">content_copy</span>
-                    </button>
-                </div>
-            </div>
-        `;
-
-        const container = document.getElementById('match-content');
-
-        let participationBtn = "";
-        let adminBtn = "";
-        let statusBadge = "";
-        let opacityClass = "";
-
-        // Determine UI based on cancellation state
-        if (match.is_cancelled) {
-            statusBadge = `<div class="bg-error text-white font-bold px-3 py-1 rounded-full text-[10px] uppercase tracking-widest inline-block mb-4">Match Cancelled</div>`;
-            opacityClass = "opacity-60 grayscale"; // Dim the content slightly
-
-            if (match.is_host) {
-                adminBtn = `<button onclick="promptRestore()" class="w-full py-4 border-2 border-primary-container text-primary-container font-bold rounded-xl hover:bg-primary-container/10 transition-all uppercase tracking-widest mt-4">Restore Match</button>`;
-            } else {
-                participationBtn = `<button disabled class="w-full py-4 bg-[#262626] text-outline font-bold rounded-xl cursor-not-allowed uppercase tracking-widest">Unavailable</button>`;
-            }
-        } else {
-            // Active Match
-            if (match.is_joined) {
-                // User is confirmed -> Show LEAVE
-                participationBtn = `
-                    <button onclick="toggleJoin()"
-                        class="w-full py-4 border-2 border-outline text-outline font-bold rounded-xl hover:border-error hover:text-error transition-all uppercase tracking-widest flex items-center justify-center gap-2 group">
-                        <span class="material-symbols-outlined text-sm transition-transform group-hover:-translate-x-1">logout</span>
-                        Leave Squad
-                    </button>`;
-            } else {
-                // User is NOT in or has 'left' -> Show JOIN
-                participationBtn = `
-                    <button onclick="toggleJoin()"
-                        class="w-full py-4 bg-primary-container text-black font-bold rounded-xl hover:bg-[#b5e500] active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2 group">
-                        <span class="material-symbols-outlined text-sm transition-transform group-hover:scale-125">sports_soccer</span>
-                        Join Squad
-                    </button>`;
-            }
-
-            if (match.is_host) {
-                adminBtn = `<button onclick="promptCancel()" class="mt-4 w-full py-2 text-error font-bold text-[10px] uppercase tracking-widest hover:underline flex items-center justify-center gap-1"><span class="material-symbols-outlined text-sm">delete</span> Cancel Match</button>`;
-            }
-        }
-
-        container.innerHTML = `
-            <header>
-                ${statusBadge}
-                <div class="flex items-center gap-2 mb-2">
-                    <div class="text-primary-container font-headline font-bold uppercase tracking-[0.3em] text-sm">Indoor Soccer • ${match.duration}HR</div>
-                    <div class="text-outline text-xs border border-outline/30 px-2 py-0.5 rounded-full">Hosted by ${match.host_username}</div>
-                </div>
-                <h1 class="text-5xl md:text-7xl font-black font-headline uppercase leading-none mb-6 ${opacityClass}">${match.title}</h1>
-                <div class="flex flex-wrap gap-6 text-outline font-bold uppercase text-xs ${opacityClass}">
-                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">calendar_month</span>${match.date}</div>
-                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">schedule</span>${match.time}</div>
-                    <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary-container">location_on</span>${match.location}</div>
-                </div>
-            </header>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="md:col-span-2 space-y-8 ${opacityClass}">
-                    <div class="bg-white/5 p-8 rounded-2xl border border-white/5">
-                        <h3 class="font-headline font-bold uppercase tracking-widest text-outline mb-6">Confirmed Squad (${match.current_roster}/${match.roster_size})</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            ${match.player_list.map(p => {
-                                const initial = p && p.length > 0 ? p[0].toUpperCase() : "?";
-                                return `
-                                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
-                                    <div class="w-8 h-8 rounded-full bg-primary-container text-black flex items-center justify-center font-bold text-xs">${initial}</div>
-                                    <span class="text-sm font-bold truncate">${p}</span>
-                                </div>`;
-                            }).join('')}
-                            ${Array(Math.max(0, match.roster_size - match.current_roster)).fill(0).map(() => `
-                                <div class="border border-dashed border-white/10 rounded-lg p-3 text-outline/30 text-xs font-bold uppercase italic text-center">Open Slot</div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <div class="p-6 rounded-2xl bg-primary-container/5 border border-primary-container/20">
-                        <div class="text-[10px] font-bold text-primary-container uppercase tracking-widest mb-1">Game Fee</div>
-                        <div class="text-4xl font-headline font-black mb-4 ${opacityClass}">${match.cost}</div>
-                        ${participationBtn}
-                        ${adminBtn}
-                    </div>
-                    ${shareComponent}
-                    <p class="text-[10px] text-outline uppercase text-center leading-relaxed">Cancelations allowed up to 24h before kick-off. Reliability index will be affected by late drop-outs.</p>
-                </div>
-            </div>
-        `;
-    }
-
-    // --- Modal Control Functions ---
-    function openConfirmModal(title, message, isDestructive, actionCallback) {
-        const modal = document.getElementById('confirmModal');
-        const actionBtn = document.getElementById('confirmActionBtn');
-        const icon = document.getElementById('confirmIcon');
-
-        document.getElementById('confirmTitle').innerText = title;
-        document.getElementById('confirmMessage').innerText = message;
-
-        if (isDestructive) {
-            actionBtn.className = "flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest bg-error text-white hover:bg-error/80 transition-colors";
-            icon.className = "material-symbols-outlined text-4xl mb-4 text-error";
-            icon.innerText = "delete_forever";
-        } else {
-            actionBtn.className = "flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest bg-primary-container text-black hover:bg-[#b5e500] transition-colors";
-            icon.className = "material-symbols-outlined text-4xl mb-4 text-primary-container";
-            icon.innerText = "restore";
-        }
-
-        pendingAction = actionCallback;
-        modal.classList.remove('hidden');
-        setTimeout(() => modal.classList.remove('opacity-0'), 10);
-    }
-
-    function closeConfirmModal() {
-        const modal = document.getElementById('confirmModal');
-        modal.classList.add('opacity-0');
-        setTimeout(() => modal.classList.add('hidden'), 300);
-        pendingAction = null;
-    }
-
-    function executeConfirm() {
-        if (pendingAction) pendingAction();
-        closeConfirmModal();
-    }
-
-    function copyShareLink() {
-        const copyInput = document.getElementById("shareInput");
-        const copyIcon = document.getElementById("copyIcon");
-
-        navigator.clipboard.writeText(copyInput.value).then(() => {
-            // Visual feedback using your kinetic style
-            copyIcon.innerText = "check_circle";
-            copyIcon.style.color = "#cafd00"; // Primary container color
-
-            // Return to original state after 2 seconds
-            setTimeout(() => {
-                copyIcon.innerText = "content_copy";
-                copyIcon.style.color = "";
-            }, 2000);
-        }).catch(err => {
-            console.error('Could not copy text: ', err);
-        });
-    }
-
-    // --- API Interactions ---
-    function promptCancel() {
-        openConfirmModal("Cancel Match", "Are you sure you want to call off this game?", true, toggleCancelState);
-    }
-
-    function promptRestore() {
-        openConfirmModal("Restore Match", "Ready to put this game back on the schedule?", false, toggleCancelState);
-    }
-
-    async function toggleCancelState() {
-        const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}/toggle-cancel`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (resp.ok) {
-            // Re-fetch details to update UI without reloading the page
-            fetchMatchDetails();
-        }
-    }
-
-    async function toggleJoin() {
-        const resp = await fetch(`http://127.0.0.1:8000/api/matches/${matchId}/toggle-join`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        fetchMatchDetails();
-    }
 </script>
 </body>
 </html>

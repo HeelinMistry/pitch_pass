@@ -1,95 +1,91 @@
-# 🏟️ PitchPass | Scalable WebAuthn API
+# 🏟️ PitchPass | Pro WebAuthn Sports Engine
 
-PitchPass is a high-performance event management system designed for local sports communities. It replaces traditional password-based systems with **WebAuthn (Passkeys)** to provide a frictionless, secure, and modern experience for hosting and joining matches.
+PitchPass is a high-performance event management system for local sports communities. It eliminates traditional passwords in favor of **WebAuthn (Passkeys)**, providing a frictionless, hardware-secured experience for hosting and joining matches.
 
-## 🚀 Project Status: Pre-Deployment
-The project currently utilizes a **Vectorized Mock Database** (`db.json`) for rapid prototyping and low-latency response times, making it ideal for the initial Raspberry Pi deployment phase.
+## 🚀 Architectural Evolution
+The project has graduated from a rapid-prototype mock-DB to a structured **FastAPI + SQLAlchemy** architecture, utilizing a versioned API pattern to ensure scalable frontend-backend synchronization.
 
 ---
 
 ## 🛠️ Technical Stack
-* **Backend:** FastAPI (Python 3.10+)
-* **Authentication:** PyWebAuthn (Passkey standard)
-* **Security:** JWT (JSON Web Tokens) with RS256/HS256
-* **Database:** `db.json` (JSON-based document store)
-* **Frontend:** Tailwind CSS, Space Grotesk/Manrope Typography
+* **Backend:** FastAPI (Python 3.11+)
+* **Database:** SQLite w/ SQLAlchemy ORM (Migrated from `db.json`)
+* **Authentication:** PyWebAuthn (Level 3 Standard)
+* **Session Management:** Starlette SessionMiddleware (Signed Cookies)
+* **Frontend:** Tailwind CSS, ES6 Modules, Space Grotesk/Manrope Typography
 
 ---
 
 ## 🏗️ Core Architecture
 
-### 1. Authentication Flow (WebAuthn)
+### 1. Unified Authentication Flow
 PitchPass uses a two-step cryptographic handshake:
-1.  **Challenge:** The server generates a unique challenge for a specific username and stores it in the database.
-2.  **Verification:** The client signs the challenge using the device's hardware-backed passkey. The server verifies the signature and issues a JWT.
+1.  **Challenge:** The server generates a unique challenge for a username, encoded as a UTF-8 string to ensure JSON-safe session storage.
+2.  **Verification:** The client signs the challenge via `SimpleWebAuthnBrowser`. The server verifies the signature against the hardware-backed public key stored in the `Passkey` table and issues a JWT.
 
-### 2. Data Model (`db.json`)
-The system tracks four primary entities:
-* **Users:** Linked via unique UUIDs.
-* **Passkeys:** Stores public keys, credential IDs, and sign counts.
-* **Matches:** Contains game metadata (sport, location, cost, roster limits).
-* **Match Players:** A join table managing the relationship between users and games.
+
+
+### 2. Data Model (`tables.py`)
+* **Users:** Unique identities linked to biometric credentials.
+* **Passkeys:** Stores `credential_id`, `public_key` (Base64), and `sign_count` for replay protection.
+* **Matches:** Metadata-rich entities (sport, duration, cost, roster limits).
+* **MatchPlayers:** Relationship table managing "Confirmed" vs "Waitlisted" status.
 
 ---
 
-## 🔌 API Endpoints
+## 🛰️ API Reference (v1)
 
-### Authentication (`/api/auth`)
+### Authentication
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/register/options/{user}` | Generate Passkey registration options. |
-| `POST` | `/register/verify` | Verify and save new Passkey credentials. |
-| `GET` | `/login/options/{user}` | Generate authentication options for a user. |
-| `POST` | `/login/verify` | Verify login and return a Bearer JWT. |
+| `GET` | `/api/v1/auth/register/options/{user}` | Generate Passkey creation challenge. |
+| `POST` | `/api/v1/auth/register/verify` | Verify hardware signature & create user. |
+| `GET` | `/api/v1/auth/login/options/{user}` | Fetch allowed credentials for biometric prompt. |
+| `POST` | `/api/v1/auth/login/verify` | Verify assertion & return JWT. |
 
-### Matches & Dashboard (`/api`)
+### Matches
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/dashboard/matches` | Returns all matches the user is hosting or joining. |
-| `POST` | `/matches` | Create a new match (protected). |
-| `GET` | `/matches/{id}` | Detailed roster and game info. |
-| `POST` | `/matches/{id}/toggle-join` | Atomic join/leave logic for games. |
-| `DELETE` | `/matches/{id}` | Cancel a match (Host only). |
+| `GET` | `/api/v1/matches` | List all matches (Host or Participant filter). |
+| `POST` | `/api/v1/matches/create` | Deploy a new match (Protected). |
+| `POST` | `/api/v1/matches/{id}/toggle-join` | Atomic join/leave logic. |
+| `POST` | `/api/v1/matches/{id}/toggle-cancel` | Atomic cancel/restore logic. |
 
 ---
 
 ## 📂 Project Structure
 ```text
-PitchPass/
+fastapi_backend/
 ├── app/
-│   ├── api/            # Route controllers (login, register, matches)
-│   ├── core/           # Security & JWT utilities
-│   ├── db/             # Mock DB logic and db.json
-│   └── main.py         # Application entry point & dependencies
-├── static/             # Frontend assets (dashboard.html, login.html)
-└── requirements.txt    # FastAPI, PyWebAuthn, python-jose
+│   ├── api/v1/         # Versioned controllers (auth.py, matches.py)
+│   ├── core/           # Security, JWT, & WebAuthn utils
+│   ├── db/             # SQLAlchemy (database.py, tables.py)
+│   └── main.py         # App entry, CORS, & Session Middleware
+├── static/
+│   ├── js/             # Modular JS (api.js, auth.js, dashboard.js)
+│   └── css/            # Tailwind & PitchPass branding
+└── requirements.txt    # FastAPI, pywebauthn, sqlalchemy
 ```
+
+---
+
+## 📝 Critical Implementation Notes
+* **Serialization Integrity:** All WebAuthn challenges are converted from `bytes` to `base64/string` during session storage to prevent JSON serialization errors in FastAPI/Starlette.
+* **Cross-Origin Security:** `api.js` utilizes `credentials: 'include'` to ensure session cookies are passed correctly across the `v1` API surface.
+* **Stigmergic Development:** This README serves as the source of truth for task breakdown. Use GitHub Issues to track the transition of remaining endpoints to the `v1` prefix.
 
 ---
 
 ## 🛠️ Development Setup
 
-1.  **Install Dependencies:**
+1.  **Install Environment:**
     ```bash
-    pip install fastapi uvicorn python-jose[cryptography] pywebauthn pydantic
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
     ```
 
-2.  **Run the API:**
+2.  **Run Server:**
     ```bash
-    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    uvicorn app.main:app --reload --port 8000
     ```
-
-3.  **Run the UI:**
-    ```bash
-    # From the project root
-    python3 -m http.server 3000
-    ```
-
----
-
-## 📝 Recent Implementation Notes
-* **Unified Identity:** The system now consistently uses UUIDs for `user_id` across JWT claims and database records to prevent identity mismatch.
-* **Atomic Updates:** `save_db(db)` is called after every state change to ensure data persistence during the development cycle.
-* **CORS Configuration:** Fully configured to allow communication between the local dev server (`:3000`) and the API (`:8000`).
-
----

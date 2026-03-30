@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;700;900&family=Manrope:wght@200;400;700;800&display=swap');
+
+:root {
+    --primary: #f3ffca;
+    --primary-container: #cafd00;
+    --secondary-container: #333333;
+    --cancelled-container: #ff0000;
+    --surface: #0e0e0e;
+    --on-surface: #ffffff;
+    --outline: #767575;
+    --error: #ff7351;
+    --surface-container: #262626;
+}
+
+body {
+    background-color: var(--surface);
+    color: var(--on-surface);
+    font-family: 'Manrope', sans-serif;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.font-headline {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+/* The Kinetic Glass Card */
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 1.5rem;
+}
+
+/* Force visibility for all kinetic-inputs */
+.kinetic-input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important; /* Forces white text when typing and after losing focus */
+    font-family: 'Manrope', sans-serif;
+}
+
+/* Specific fix for Date and Time inputs which often default to black icons/text */
+.kinetic-input[type="date"],
+.kinetic-input[type="time"] {
+    color-scheme: dark; /* This tells the browser to use white text/icons for the picker */
+    color: #ffffff !important;
+}
+
+.kinetic-input::placeholder {
+    color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Ensure the text remains white when focused */
+.kinetic-input:focus {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-color: var(--primary-container) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(202, 253, 0, 0.1);
+}
+
+/* This fixes the issue where Chrome/Safari autofill turns the background white */
+.kinetic-input:-webkit-autofill,
+.kinetic-input:-webkit-autofill:hover,
+.kinetic-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0px 1000px #131313 inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Pitch Card Hover Glow */
+.match-card {
+    background: rgba(51, 51, 51, 1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.joined-match-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.match-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--primary-container);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.match-card.border-red-500\/30 {
+    background: linear-gradient(90deg, rgba(255, 0, 0, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.line-through {
+    text-decoration-thickness: 2px;
+    text-decoration-color: rgba(239, 68, 68, 0.5); /* Soft Red */
+}
+
+/* Specific button styles for the date box */
+.date-box {
+    background: var(--secondary-container);
+    text: white;
+    color: white;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.joined-date-box {
+    background: var(--primary-container);
+    color: black;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.cancelled-date-box {
+    background: var(--cancelled-container);
+    color: black;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Transitions for Modal */
+.opacity-0 { opacity: 0; pointer-events: none; }
+.hidden { display: none !important; }
