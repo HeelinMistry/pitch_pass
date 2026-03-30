@@ -34,8 +34,8 @@ function renderDetails(match) {
     let actionBtn = "";
     if (isCancelled) {
         actionBtn = match.is_host
-            ? `<button onclick="window.toggleCancelState()" class="w-full py-5 border border-pitch-green text-pitch-green font-black rounded-xl hover:bg-pitch-green/5 transition-all uppercase tracking-widest">Restore Match</button>`
-            : `<button disabled class="w-full py-5 bg-white/5 text-pitch-outline font-black rounded-xl uppercase tracking-widest cursor-not-allowed">Match Cancelled</button>`;
+            ? `<button onclick="window.promptCancel()" class="w-full py-5 border border-pitch-green text-pitch-green font-black rounded-xl hover:bg-pitch-green/5 transition-all uppercase tracking-widest">Restore Match</button>`
+            : `<button onclick="window.promptCancel()" class="w-full py-5 bg-white/5 text-pitch-outline font-black rounded-xl uppercase tracking-widest cursor-not-allowed">Match Cancelled</button>`;
     } else {
         if (isJoined) {
             actionBtn = `<button onclick="window.toggleJoin()" class="w-full py-5 border border-white/10 text-pitch-outline font-black rounded-xl hover:border-red-500 hover:text-red-500 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
@@ -131,20 +131,9 @@ window.toggleJoin = async () => {
 
 window.promptCancel = () => {
     openConfirmModal("Cancel Match", "This will call off the game for everyone. Proceed?", async () => {
-        await fetch(`${API_URL}/matches/${matchId}/toggle-cancel`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        await apiRequest(`/matches/${matchId}/toggle-cancel`, 'POST');
         fetchMatchDetails();
     });
-};
-
-window.toggleCancelState = async () => {
-    await fetch(`${API_URL}/matches/${matchId}/toggle-cancel`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    fetchMatchDetails();
 };
 
 // MODAL LOGIC

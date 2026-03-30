@@ -1,24 +1,21 @@
-const API_URL = 'http://localhost:8000/api';
+import { apiRequest } from './api.js';
+import { initPageTransition } from './ui.js';
 
 export async function initDashboard() {
-    // 1. Check for Token (Secure the Route)
-    const token = localStorage.getItem('pitchpass_token');
-    if (!token) {
-        window.location.href = 'login.html';
-        return;
-    }
-
+    initPageTransition();
     // 2. Initialize UI Components
     setupModalLogic();
     setupSteppers();
 
     // 3. Initial Data Load
-    await loadDashboardData(token);
+    loadDashboardData();
 
     // 4. Attach Form Submission
     const generateBtn = document.getElementById('generateBtn');
     if (generateBtn) {
-        generateBtn.onclick = () => handleCreateMatch(token);
+        // Remove the arrow function that doesn't execute anything
+        // and point it directly to handleCreateMatch
+        generateBtn.onclick = handleCreateMatch;
     }
 }
 
@@ -76,69 +73,8 @@ function setupSteppers() {
 }
 
 /**
- * Data: Create Match on Backend
+ * Render Dashboard
  */
-async function handleCreateMatch(token) {
-    const btn = document.getElementById('generateBtn');
-    const originalText = btn.innerHTML;
-
-    const payload = {
-        title: document.getElementById('matchTitle')?.value || "Untitled Match",
-        sport: document.getElementById('sportType').value,
-        duration: parseInt(document.getElementById('durationLabel').innerText),
-        date_event: document.getElementById('matchDate')?.value || "TBD",
-        time: document.getElementById('matchTime')?.value || "TBD",
-        location: document.getElementById('matchLocation')?.value || "TBD",
-        roster_size: parseInt(document.getElementById('rosterDisplay').innerText),
-        cost: parseFloat(document.getElementById('matchCost')?.value) || 0
-    };
-
-    try {
-        btn.innerHTML = "Deploying...";
-        const resp = await fetch(`${API_URL}/matches`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (resp.ok) {
-            window.closeModal();
-            await loadDashboardData(token); // Refresh the list
-        } else {
-            console.error("Match creation failed");
-        }
-    } catch (err) {
-        console.error("Network Error:", err);
-    } finally {
-        btn.innerHTML = originalText;
-    }
-}
-
-/**
- * Data: Fetch and Render Dashboard
- */
-async function loadDashboardData(token) {
-    try {
-        const response = await fetch(`${API_URL}/dashboard/matches`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (response.status === 401) {
-            localStorage.removeItem('pitchpass_token');
-            window.location.href = 'login.html';
-            return;
-        }
-
-        const matches = await response.json();
-        renderMatches(matches);
-        renderActivity(matches);
-    } catch (err) {
-        console.error("API Sync Failed", err);
-    }
-}
 
 function renderMatches(matches) {
     const container = document.getElementById('match-container');
@@ -146,6 +82,11 @@ function renderMatches(matches) {
     const header = container.querySelector('div');
     container.innerHTML = '';
     container.appendChild(header);
+
+    if (!matches || matches.length === 0) {
+        container.innerHTML = `<p class="text-pitch-outline">No matches found.</p>`;
+        return;
+    }
 
     matches.forEach(match => {
         const dateObj = new Date(match.date);
@@ -220,4 +161,63 @@ function renderActivity(matches) {
         `;
         activityFeed.insertAdjacentHTML('beforeend', item);
     });
+}
+
+/**
+ * Data: Backend
+ */
+async function handleCreateMatch() {
+    const btn = document.getElementById('generateBtn');
+    const originalText = btn.innerHTML;
+
+    // Gather data from your dashboard.html IDs
+    const payload = {
+        title: document.getElementById('matchTitle')?.value || "Untitled Match",
+        sport: document.getElementById('sportType').value,
+        duration: parseFloat(document.getElementById('durationLabel').innerText),
+        date_event: document.getElementById('matchDate')?.value || "TBD",
+        time: document.getElementById('matchTime')?.value || "TBD",
+        location: document.getElementById('matchLocation')?.value || "TBD",
+        roster_size: parseInt(document.getElementById('rosterDisplay').innerText),
+        cost: parseFloat(document.getElementById('matchCost')?.value) || 0
+    };
+
+    try {
+        btn.innerHTML = "Deploying...";
+        btn.disabled = true;
+
+        // Use the full endpoint defined in matches.py
+        const resp = await apiRequest('/matches/create', 'POST', payload);
+
+        if (resp && resp.status === 'success') {
+            window.closeModal();
+            // Refresh the list so the new match appears
+            await loadDashboardData();
+        }
+    } catch (err) {
+        console.error("Match creation failed:", err);
+        alert("Failed to create match. Check console.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+
+async function loadDashboardData() {
+    try {
+        // apiRequest already returns the parsed JSON array
+        const matches = await apiRequest('/matches');
+
+        // Ensure we actually got data before trying to render
+        if (matches && Array.isArray(matches)) {
+            renderMatches(matches);
+            renderActivity(matches);
+        } else {
+            console.warn("No matches found or invalid format received");
+            renderMatches([]); // Render empty state
+        }
+    } catch (err) {
+        console.error("Dashboard failed to load matches:", err);
+    }
 }
