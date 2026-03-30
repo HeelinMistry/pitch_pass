@@ -1,5 +1,5 @@
 const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'http://localhost:8000/api/v1';
 
 /**
  * Helper to determine where to send the user after a successful login

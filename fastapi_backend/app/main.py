@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, matches
+from app.api.v1 import auth, matches
 from app.db.database import engine, Base
 from app.core.config import SECRET_CHALLENGE_KEY
 
@@ -28,8 +28,8 @@ app.add_middleware(
 )
 
 # Routes
-app.include_router(auth.router, prefix="/api")
-app.include_router(matches.router, prefix="/api")
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(matches.router, prefix="/api/v1")
 
 # Static Files
 app.mount("/static", StaticFiles(directory="static"), name="static")

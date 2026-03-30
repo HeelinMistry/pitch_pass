@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "http://localhost:8000/api/v1";
 
 export async function apiRequest(endpoint, method = "GET", body = null) {
     const token = localStorage.getItem('pitchpass_token');
