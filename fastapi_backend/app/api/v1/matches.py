@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db import tables
 from app.db.database import get_db
-from app.core.auth_utils import get_current_user # Ensure this helper is moved to core
+from app.core.auth_utils import get_current_user
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/matches", tags=["Matches"])
