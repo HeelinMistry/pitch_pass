@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import Column, String, Integer, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -26,7 +28,7 @@ class Passkey(Base):
 class Match(Base):
     __tablename__ = "matches"
 
-    id = Column(String, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True, default=f"m_{uuid.uuid4().hex[:8]}")
     title = Column(String)
     sport = Column(String)
     duration = Column(String)

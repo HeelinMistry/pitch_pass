@@ -76,8 +76,6 @@ export async function handleLogin() {
 
         console.log("Allow Credentials Check:", options.allowCredentials);
         // 2. Trigger Browser Authentication
-        // CRITICAL: We use startAuthentication from the library.
-        // If your library is imported via script tag, it might be SimpleWebAuthnBrowser.startAuthentication
         const assertionResponse = await startAuthentication({ optionsJSON: options });
         // 3. Verify with Backend and get JWT
         const result = await apiRequest('/auth/login/verify', 'POST', {

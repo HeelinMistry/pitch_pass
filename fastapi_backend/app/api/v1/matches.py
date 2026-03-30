@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.db import models
+from app.db import tables
 from app.db.database import get_db
 from app.core.auth_utils import get_current_user # Ensure this helper is moved to core
 from pydantic import BaseModel
@@ -25,7 +25,7 @@ async def get_matches(
         db: Session = Depends(get_db)
 ):
     user_id = current_user["id"]
-    all_matches = db.query(models.Match).all()
+    all_matches = db.query(tables.Match).all()
     user_matches = []
 
     for m in all_matches:
@@ -55,7 +55,7 @@ async def get_matches(
 @router.post("/create")
 async def create_match(match: MatchCreate, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     match_id = f"m_{uuid.uuid4().hex[:8]}"
-    new_match = models.Match(
+    new_match = tables.Match(
         id=match_id,
         title=match.title,
         sport=match.sport,
@@ -77,7 +77,7 @@ async def get_match_details(
         current_user: dict = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    match = db.query(models.Match).filter(models.Match.id == match_id).first()
+    match = db.query(tables.Match).filter(tables.Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
 
@@ -88,7 +88,7 @@ async def get_match_details(
 
     for p in match.players:
         if p.status == "confirmed":
-            user_record = db.query(models.User).filter(models.User.id == p.user_id).first()
+            user_record = db.query(tables.User).filter(tables.User.id == p.user_id).first()
             username = user_record.username if user_record else "Unknown"
             active_players.append(username)
 
@@ -117,9 +117,9 @@ async def toggle_join(match_id: str, user: dict = Depends(get_current_user), db:
     user_id = user["id"]
 
     # Check if user is already in the match
-    existing_entry = db.query(models.MatchPlayer).filter(
-        models.MatchPlayer.match_id == match_id,
-        models.MatchPlayer.user_id == user_id
+    existing_entry = db.query(tables.MatchPlayer).filter(
+        tables.MatchPlayer.match_id == match_id,
+        tables.MatchPlayer.user_id == user_id
     ).first()
 
     if existing_entry:
@@ -133,11 +133,11 @@ async def toggle_join(match_id: str, user: dict = Depends(get_current_user), db:
             action = "confirmed"
     else:
         # Check roster limit
-        match = db.query(models.Match).filter(models.Match.id == match_id).first()
+        match = db.query(tables.Match).filter(tables.Match.id == match_id).first()
         if len(match.players) >= match.roster_size:
             raise HTTPException(status_code=400, detail="Match is full")
 
-        new_player = models.MatchPlayer(match_id=match_id, user_id=user_id)
+        new_player = tables.MatchPlayer(match_id=match_id, user_id=user_id)
         db.add(new_player)
         action = "confirmed"
 
@@ -146,7 +146,7 @@ async def toggle_join(match_id: str, user: dict = Depends(get_current_user), db:
 
 @router.post("/{match_id}/toggle-cancel")
 async def toggle_cancel(match_id: str, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    match = db.query(models.Match).filter(models.Match.id == match_id).first()
+    match = db.query(tables.Match).filter(tables.Match.id == match_id).first()
 
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")

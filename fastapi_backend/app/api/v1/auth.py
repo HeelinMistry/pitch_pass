@@ -16,7 +16,7 @@ from webauthn import (
 from app.core.config import RP_ID, RP_NAME, ORIGIN
 from app.core.auth_utils import create_access_token
 from app.db.database import get_db
-from app.db import models, crud
+from app.db import tables, crud
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -70,15 +70,15 @@ async def verify_reg(payload: AuthVerifyReq, request: Request, db: Session = Dep
 
     # 3. SQL PERSISTENCE: Ensure User exists
     user_id = challenge_data["user_id"]
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    user = db.query(tables.User).filter(tables.User.id == user_id).first()
 
     if not user:
-        user = models.User(id=user_id, username=payload.username)
+        user = tables.User(id=user_id, username=payload.username)
         db.add(user)
 
     # 4. SQL PERSISTENCE: Save the new Passkey
     # We use the credential ID provided by the browser
-    new_passkey = models.Passkey(
+    new_passkey = tables.Passkey(
         id=credential.id,
         user_id=user.id,
         public_key=verification.credential_public_key.hex(),
@@ -106,7 +106,7 @@ async def get_log_options(request: Request, username: str, db: Session = Depends
     if not user:
         raise HTTPException(404, "User not found")
 
-    user_passkeys = db.query(models.Passkey).filter(models.Passkey.user_id == user.id).all()
+    user_passkeys = db.query(tables.Passkey).filter(tables.Passkey.user_id == user.id).all()
 
     # FIX: Wrap the dictionary in a PublicKeyCredentialDescriptor
     # and decode the string ID into bytes.
@@ -146,12 +146,12 @@ async def verify_log(payload: AuthVerifyReq, request: Request, db: Session = Dep
         credential = parse_authentication_credential_json(payload.response)
 
         # 3. Find the specific Passkey in SQL using the Credential ID
-        target_passkey = db.query(models.Passkey).filter(models.Passkey.id == credential.id).first()
+        target_passkey = db.query(tables.Passkey).filter(tables.Passkey.id == credential.id).first()
 
         if not target_passkey:
             # Fallback check for URL-safe base64 variations if necessary
             normalized_id = base64url_to_standard_base64(credential.id)
-            target_passkey = db.query(models.Passkey).filter(models.Passkey.id == normalized_id).first()
+            target_passkey = db.query(tables.Passkey).filter(tables.Passkey.id == normalized_id).first()
 
         if not target_passkey:
             raise HTTPException(status_code=404, detail="Device not recognized. Please register this device.")
