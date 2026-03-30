@@ -1,5 +1,8 @@
-const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
-const API_URL = 'http://localhost:8000/api/v1';
+import { apiRequest } from './api.js';
+
+// If SimpleWebAuthnBrowser is loaded via script tag in HTML,
+// we pull the methods from the global window object.
+const { startRegistration, startAuthentication } = window.SimpleWebAuthnBrowser;
 
 /**
  * Helper to determine where to send the user after a successful login
@@ -35,25 +38,18 @@ export async function handleRegister() {
 
     try {
         // 1. Get Registration Options from Backend
-        const resp = await fetch(`${API_URL}/auth/register/options/${username}`, { credentials: 'include' });
-        if (!resp.ok) {
-            const errData = await resp.json();
-            throw new Error(errData.detail || 'Failed to get options');
-        }
-        const options = await resp.json();
+        const options = await apiRequest(`/auth/register/options/${username}`);
+        if (!options) throw new Error("Failed to get registration options");
 
         // 2. Trigger Browser Biometrics (FaceID/TouchID/Passkey)
-        const attestationResponse = await startRegistration(options);
+        const attestationResponse = await startRegistration({ optionsJSON: options });
 
         // 3. Verify Response with Backend
-        const verifyResp = await fetch(`${API_URL}/auth/register/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ username, response: attestationResponse }),
+        const result = await apiRequest('/auth/register/verify', 'POST', {
+            username,
+            response: attestationResponse
         });
 
-        const result = await verifyResp.json();
         if (result.status === 'success') {
             updateStatus('✅ Registered! You can now login.');
         } else {
@@ -75,30 +71,19 @@ export async function handleLogin() {
 
     try {
         // 1. Get Login Options from Backend
-        const resp = await fetch(`${API_URL}/auth/login/options/${username}`, {
-            credentials: 'include'
-        });
+        const options = await apiRequest(`/auth/login/options/${username}`);
+        if (!options) throw new Error('User not found or error fetching options');
 
-        if (!resp.ok) throw new Error('User not found or error fetching options');
-
-        const options = await resp.json();
         console.log("Allow Credentials Check:", options.allowCredentials);
         // 2. Trigger Browser Authentication
         // CRITICAL: We use startAuthentication from the library.
         // If your library is imported via script tag, it might be SimpleWebAuthnBrowser.startAuthentication
-        const assertionResponse = await SimpleWebAuthnBrowser.startAuthentication(options);
+        const assertionResponse = await startAuthentication({ optionsJSON: options });
         // 3. Verify with Backend and get JWT
-        const verifyResp = await fetch(`${API_URL}/auth/login/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-                username: username,
-                response: assertionResponse
-            }),
+        const result = await apiRequest('/auth/login/verify', 'POST', {
+            username,
+            response: assertionResponse
         });
-
-        const result = await verifyResp.json();
 
         if (result.status === 'success' && result.access_token) {
             updateStatus('✅ Access Granted!');

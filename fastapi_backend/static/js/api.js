@@ -14,6 +14,7 @@ export async function apiRequest(endpoint, method = "GET", body = null) {
     const config = {
         method,
         headers,
+        credentials: 'include',
     };
 
     if (body) {
